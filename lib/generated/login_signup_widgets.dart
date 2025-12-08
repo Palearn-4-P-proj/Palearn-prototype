@@ -1,0 +1,527 @@
+import 'package:flutter/material.dart';
+import '../data/api_service.dart';
+import '../core/widgets.dart';
+
+/// 공통 컬러
+const _blue = Color(0xFF7DB2FF);
+const _blueLight = Color(0xFFD4E5FE);
+const _ink = Color(0xFF093030);
+
+/// ==============================
+/// Login
+/// ==============================
+class LoginWidget extends StatefulWidget {
+  const LoginWidget({
+    super.key,
+    this.onTapSignUpText,
+    this.onTapLogin,
+  });
+
+  final VoidCallback? onTapSignUpText;
+  final VoidCallback? onTapLogin;
+
+  @override
+  State<LoginWidget> createState() => _LoginWidgetState();
+}
+
+class _LoginWidgetState extends State<LoginWidget> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이메일과 비밀번호를 입력하세요')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthService.login(email: email, password: password);
+      if (result['success'] == true && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그인 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return SizedBox(
+      width: double.infinity,
+      height: size.height,
+      child: Stack(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: size.height,
+            child: ClipPath(
+              clipper: _BottomArcClipper(),
+              child: Container(color: _blue),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            top: size.height * 0.18,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 16,
+                    color: Colors.black.withOpacity(0.06),
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(
+                      child: Text(
+                        'Welcome',
+                        style: TextStyle(
+                          color: _ink,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    const Text('아이디',
+                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    _RoundedField(
+                      hint: 'example@example.com',
+                      controller: _emailController,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Text('비밀번호',
+                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    _RoundedField(
+                      hint: '••••••••',
+                      obscure: true,
+                      controller: _passwordController,
+                      trailing: Icon(Icons.visibility_off, size: 20, color: _ink.withOpacity(.7)),
+                    ),
+
+                    const SizedBox(height: 24),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _PrimaryButton(text: 'Log In', onTap: _handleLogin),
+
+                    const SizedBox(height: 16),
+                    _SecondaryButton(
+                      text: 'Sign Up',
+                      onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Spacer(),
+
+                    GestureDetector(
+                      onTap: widget.onTapSignUpText,
+                      child: const Center(
+                        child: Text.rich(
+                          TextSpan(
+                            text: "Don't have an account? ",
+                            style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w300),
+                            children: [
+                              TextSpan(
+                                text: 'Sign Up',
+                                style: TextStyle(
+                                  color: Color(0xFF6CB5FD),
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ==============================
+/// Sign Up (Create Account)
+/// ==============================
+class CreateAccountWidget extends StatefulWidget {
+  const CreateAccountWidget({super.key, this.onTapBackToLogin});
+  final VoidCallback? onTapBackToLogin;
+
+  @override
+  State<CreateAccountWidget> createState() => _CreateAccountWidgetState();
+}
+
+class _CreateAccountWidgetState extends State<CreateAccountWidget> {
+  final _emailController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _password2Controller = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _nameController.dispose();
+    _passwordController.dispose();
+    _password2Controller.dispose();
+    super.dispose();
+  }
+
+  /// 비밀번호 유효성 검사: 8자 이상, 대문자 1개 이상
+  String? _validatePassword(String password) {
+    if (password.length < 8) {
+      return '비밀번호는 8자 이상이어야 합니다';
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return '비밀번호에 대문자가 1개 이상 포함되어야 합니다';
+    }
+    return null;
+  }
+
+  Future<void> _handleSignUp() async {
+    final email = _emailController.text.trim();
+    final name = _nameController.text.trim();
+    final password = _passwordController.text;
+    final password2 = _password2Controller.text;
+
+    if (email.isEmpty || name.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 필드를 입력하세요')),
+      );
+      return;
+    }
+
+    // 비밀번호 유효성 검사
+    final passwordError = _validatePassword(password);
+    if (passwordError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(passwordError)),
+      );
+      return;
+    }
+
+    if (password != password2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비밀번호가 일치하지 않습니다')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthService.signup(
+        username: email.split('@').first,
+        email: email,
+        password: password,
+        name: name,
+        birth: '2000-01-01',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('회원가입 실패: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return SizedBox(
+      width: double.infinity,
+      height: size.height,
+      child: Stack(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: size.height,
+            child: ClipPath(
+              clipper: _BottomArcClipper(),
+              child: Container(color: _blue),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            top: size.height * 0.18,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 16,
+                    color: Colors.black.withOpacity(0.06),
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(
+                      child: Text(
+                        'Create Account',
+                        style: TextStyle(
+                          color: _ink,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    const Text('이메일',
+                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    _RoundedField(hint: 'example@example.com', controller: _emailController),
+
+                    const SizedBox(height: 16),
+                    const Text('이름',
+                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    _RoundedField(hint: '홍길동', controller: _nameController),
+
+                    const SizedBox(height: 16),
+                    const Text('비밀번호',
+                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    _RoundedField(
+                      hint: '••••••••',
+                      obscure: true,
+                      controller: _passwordController,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+                    PasswordStrengthIndicator(password: _passwordController.text),
+
+                    const SizedBox(height: 16),
+                    const Text('비밀번호 확인',
+                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    _RoundedField(hint: '••••••••', obscure: true, controller: _password2Controller),
+
+                    const SizedBox(height: 24),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _PrimaryButton(text: 'Sign Up', onTap: _handleSignUp),
+
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: widget.onTapBackToLogin ?? () => Navigator.pushReplacementNamed(context, '/login'),
+                      child: const Center(
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'Already have an account?  ',
+                            style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w300),
+                            children: [
+                              TextSpan(
+                                text: 'Log In',
+                                style: TextStyle(
+                                  color: Color(0xFF6CB5FD),
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ==============================
+/// 공용 작은 위젯들
+/// ==============================
+class _RoundedField extends StatelessWidget {
+  const _RoundedField({
+    this.hint,
+    this.obscure = false,
+    this.trailing,
+    this.controller,
+    this.onChanged,
+  });
+  final String? hint;
+  final bool obscure;
+  final Widget? trailing;
+  final TextEditingController? controller;
+  final ValueChanged<String>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: _blueLight,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              obscureText: obscure,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                hintText: hint,
+                border: InputBorder.none,
+                isCollapsed: true,
+                hintStyle: TextStyle(
+                  color: _ink.withOpacity(.45),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (trailing != null) trailing!,
+        ],
+      ),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  const _PrimaryButton({required this.text, required this.onTap});
+  final String text;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 46,
+      child: FilledButton(
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: _blue,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Color(0xFFE0E6F6),
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SecondaryButton extends StatelessWidget {
+  const _SecondaryButton({required this.text, required this.onTap});
+  final String text;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 46,
+      child: FilledButton(
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: _blueLight,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Color(0xFF0E3E3E),
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 상단 하늘색 영역의 '아래쪽 아치'를 만드는 클리퍼
+class _BottomArcClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final topY = size.height * 0.28;
+    final midDrop = size.height * 0.08;
+
+    final path = Path()..lineTo(0, topY);
+    final control = Offset(size.width / 2, topY + midDrop);
+    final end = Offset(size.width, topY);
+    path.quadraticBezierTo(control.dx, control.dy, end.dx, end.dy);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _BottomArcClipper oldClipper) => false;
+}

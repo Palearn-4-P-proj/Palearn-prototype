@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # 백엔드 API 서버
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-palearn-secret-key-change-in-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:80,https://*.railway.app
+    volumes:
+      - ./Backend/data:/app/data  # DB 영구 저장
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Flutter 웹 프론트엔드
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_data:

@@ -1,0 +1,509 @@
+// Palearn Database Schema Diagram
+// (2) 데이터베이스 구조
+// 렌더링: dot -Tpng database_schema.dot -o database_schema.png
+
+digraph PalearnDatabaseSchema {
+    // 그래프 전역 설정
+    rankdir=LR;
+    compound=true;
+    fontname="Helvetica";
+    fontsize=14;
+    splines=ortho;
+    nodesep=1.0;
+    ranksep=1.5;
+
+    // 노드 기본 스타일
+    node [shape=none, fontname="Helvetica", fontsize=10];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // ===== USERS 테이블 =====
+    users [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#E3F2FD">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#1976D2"><FONT COLOR="white"><B>👤 USERS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#BBDEFB"><B>Column</B></TD>
+                <TD BGCOLOR="#BBDEFB"><B>Type</B></TD>
+                <TD BGCOLOR="#BBDEFB"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔑 user_id</TD>
+                <TD>UUID (String)</TD>
+                <TD ALIGN="LEFT">Primary Key - 사용자 고유 식별자</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">username</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">사용자명 (로그인 ID)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">✉️ email</TD>
+                <TD>String (Unique)</TD>
+                <TD ALIGN="LEFT">이메일 주소 (중복 불가)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔒 password</TD>
+                <TD>String (SHA256)</TD>
+                <TD ALIGN="LEFT">비밀번호 해시값</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">name</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">사용자 실명</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📅 birth</TD>
+                <TD>String (YYYY-MM-DD)</TD>
+                <TD ALIGN="LEFT">생년월일</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📷 photo_url</TD>
+                <TD>String (Optional)</TD>
+                <TD ALIGN="LEFT">프로필 사진 URL</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🏷️ friend_code</TD>
+                <TD>String (8 chars)</TD>
+                <TD ALIGN="LEFT">친구 추가용 고유 코드 (MD5[:8])</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">⏰ created_at</TD>
+                <TD>ISO Timestamp</TD>
+                <TD ALIGN="LEFT">계정 생성 시각</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== PLANS 테이블 =====
+    plans [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#E8F5E9">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#388E3C"><FONT COLOR="white"><B>📚 PLANS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#A5D6A7"><B>Column</B></TD>
+                <TD BGCOLOR="#A5D6A7"><B>Type</B></TD>
+                <TD BGCOLOR="#A5D6A7"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 user_id</TD>
+                <TD>UUID (FK → Users)</TD>
+                <TD ALIGN="LEFT">사용자 외래키</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📋 plan_name</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">학습 계획명</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">⏱️ total_duration</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">총 학습 기간 (예: "4주")</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📆 daily_schedule</TD>
+                <TD>List[DailySchedule]</TD>
+                <TD ALIGN="LEFT">일별 학습 스케줄 목록</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== DAILY_SCHEDULE 테이블 =====
+    daily_schedule [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#FFF3E0">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#E65100"><FONT COLOR="white"><B>📅 DAILY_SCHEDULE</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#FFE0B2"><B>Column</B></TD>
+                <TD BGCOLOR="#FFE0B2"><B>Type</B></TD>
+                <TD BGCOLOR="#FFE0B2"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📆 date</TD>
+                <TD>String (YYYY-MM-DD)</TD>
+                <TD ALIGN="LEFT">학습 날짜</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📝 tasks</TD>
+                <TD>List[Task]</TD>
+                <TD ALIGN="LEFT">해당 날짜의 학습 과제 목록</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== TASKS 테이블 =====
+    tasks [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#FCE4EC">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#C2185B"><FONT COLOR="white"><B>✅ TASKS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#F8BBD9"><B>Column</B></TD>
+                <TD BGCOLOR="#F8BBD9"><B>Type</B></TD>
+                <TD BGCOLOR="#F8BBD9"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔑 id</TD>
+                <TD>UUID (String)</TD>
+                <TD ALIGN="LEFT">과제 고유 식별자</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📌 title</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">학습 주제 제목</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📝 description</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">상세 설명</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">⏱️ duration</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">예상 소요 시간 (예: "1시간")</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">✓ completed</TD>
+                <TD>Boolean</TD>
+                <TD ALIGN="LEFT">완료 여부 (기본: false)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📚 related_materials</TD>
+                <TD>List[Material]</TD>
+                <TD ALIGN="LEFT">관련 학습 자료 목록</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔄 review_materials</TD>
+                <TD>List[Material]</TD>
+                <TD ALIGN="LEFT">복습 자료 목록</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== MATERIALS 테이블 =====
+    materials [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#F3E5F5">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#7B1FA2"><FONT COLOR="white"><B>📖 MATERIALS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#E1BEE7"><B>Column</B></TD>
+                <TD BGCOLOR="#E1BEE7"><B>Type</B></TD>
+                <TD BGCOLOR="#E1BEE7"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📌 title</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">자료 제목</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 url</TD>
+                <TD>String (URL)</TD>
+                <TD ALIGN="LEFT">자료 링크</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🏷️ type</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">자료 유형 (youtube/blog/doc)</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== FRIENDSHIPS 테이블 =====
+    friendships [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#FFFDE7">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#F9A825"><FONT COLOR="white"><B>👥 FRIENDSHIPS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#FFF9C4"><B>Column</B></TD>
+                <TD BGCOLOR="#FFF9C4"><B>Type</B></TD>
+                <TD BGCOLOR="#FFF9C4"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 user_id</TD>
+                <TD>UUID (FK → Users)</TD>
+                <TD ALIGN="LEFT">사용자 외래키</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">👤 friend_ids</TD>
+                <TD>List[UUID]</TD>
+                <TD ALIGN="LEFT">친구 사용자 ID 목록</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== NOTIFICATIONS 테이블 =====
+    notifications [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#E0F7FA">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#00838F"><FONT COLOR="white"><B>🔔 NOTIFICATIONS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#B2EBF2"><B>Column</B></TD>
+                <TD BGCOLOR="#B2EBF2"><B>Type</B></TD>
+                <TD BGCOLOR="#B2EBF2"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 user_id</TD>
+                <TD>UUID (FK → Users)</TD>
+                <TD ALIGN="LEFT">사용자 외래키</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🆕 new</TD>
+                <TD>List[String]</TD>
+                <TD ALIGN="LEFT">읽지 않은 알림 메시지</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📭 old</TD>
+                <TD>List[String]</TD>
+                <TD ALIGN="LEFT">읽은 알림 메시지</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== QUIZ_ANSWERS 테이블 =====
+    quiz_answers [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#FFEBEE">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#D32F2F"><FONT COLOR="white"><B>❓ QUIZ_ANSWERS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#FFCDD2"><B>Column</B></TD>
+                <TD BGCOLOR="#FFCDD2"><B>Type</B></TD>
+                <TD BGCOLOR="#FFCDD2"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 user_id</TD>
+                <TD>UUID (FK → Users)</TD>
+                <TD ALIGN="LEFT">사용자 외래키</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">📋 quiz_items</TD>
+                <TD>List[QuizItem]</TD>
+                <TD ALIGN="LEFT">퀴즈 문항 목록</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== QUIZ_ITEM 테이블 =====
+    quiz_item [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#FBE9E7">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#E64A19"><FONT COLOR="white"><B>📝 QUIZ_ITEM</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#FFCCBC"><B>Column</B></TD>
+                <TD BGCOLOR="#FFCCBC"><B>Type</B></TD>
+                <TD BGCOLOR="#FFCCBC"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔑 id</TD>
+                <TD>Integer</TD>
+                <TD ALIGN="LEFT">문항 번호 (1-10)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">❔ question</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">O/X 퀴즈 질문</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">✓ answer</TD>
+                <TD>Boolean</TD>
+                <TD ALIGN="LEFT">정답 (true=O, false=X)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">💡 explanation</TD>
+                <TD>String</TD>
+                <TD ALIGN="LEFT">정답 해설</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== AUTH_TOKENS 테이블 =====
+    auth_tokens [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#ECEFF1">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#455A64"><FONT COLOR="white"><B>🔐 AUTH_TOKENS</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#CFD8DC"><B>Column</B></TD>
+                <TD BGCOLOR="#CFD8DC"><B>Type</B></TD>
+                <TD BGCOLOR="#CFD8DC"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔑 token</TD>
+                <TD>UUID (String)</TD>
+                <TD ALIGN="LEFT">인증 토큰 (Primary Key)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 user_id</TD>
+                <TD>UUID (FK → Users)</TD>
+                <TD ALIGN="LEFT">토큰 소유자</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== FRIEND_CODES 테이블 =====
+    friend_codes [label=<
+        <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" BGCOLOR="#E8EAF6">
+            <TR>
+                <TD COLSPAN="3" BGCOLOR="#3F51B5"><FONT COLOR="white"><B>🏷️ FRIEND_CODES</B></FONT></TD>
+            </TR>
+            <TR>
+                <TD BGCOLOR="#C5CAE9"><B>Column</B></TD>
+                <TD BGCOLOR="#C5CAE9"><B>Type</B></TD>
+                <TD BGCOLOR="#C5CAE9"><B>Description</B></TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔑 friend_code</TD>
+                <TD>String (8 chars)</TD>
+                <TD ALIGN="LEFT">친구 코드 (Primary Key)</TD>
+            </TR>
+            <TR>
+                <TD ALIGN="LEFT">🔗 user_id</TD>
+                <TD>UUID (FK → Users)</TD>
+                <TD ALIGN="LEFT">코드 소유자</TD>
+            </TR>
+        </TABLE>
+    >];
+
+    // ===== 관계 정의 =====
+
+    // Users -> Plans (1:N)
+    users:e -> plans:w [
+        label="1:N\nhas many",
+        color="#388E3C",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // Plans -> DailySchedule (1:N)
+    plans:e -> daily_schedule:w [
+        label="1:N\ncontains",
+        color="#E65100",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // DailySchedule -> Tasks (1:N)
+    daily_schedule:e -> tasks:w [
+        label="1:N\nhas",
+        color="#C2185B",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // Tasks -> Materials (1:N)
+    tasks:e -> materials:w [
+        label="1:N\nreferences",
+        color="#7B1FA2",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // Users -> Friendships (1:1)
+    users:s -> friendships:n [
+        label="1:1",
+        color="#F9A825",
+        penwidth=2,
+        arrowhead=normal
+    ];
+
+    // Users -> Notifications (1:1)
+    users:s -> notifications:n [
+        label="1:1",
+        color="#00838F",
+        penwidth=2,
+        arrowhead=normal
+    ];
+
+    // Users -> QuizAnswers (1:N)
+    users:s -> quiz_answers:n [
+        label="1:N",
+        color="#D32F2F",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // QuizAnswers -> QuizItem (1:N)
+    quiz_answers:e -> quiz_item:w [
+        label="1:N\ncontains",
+        color="#E64A19",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // Users -> AuthTokens (1:N)
+    users:s -> auth_tokens:n [
+        label="1:N\ngenerates",
+        color="#455A64",
+        penwidth=2,
+        arrowhead=crow,
+        arrowtail=tee
+    ];
+
+    // Users -> FriendCodes (1:1)
+    users:s -> friend_codes:n [
+        label="1:1\nowns",
+        color="#3F51B5",
+        penwidth=2,
+        arrowhead=normal
+    ];
+
+    // ===== 범례 =====
+    subgraph cluster_legend {
+        label="범례 (Legend)";
+        style="rounded,filled";
+        fillcolor="#FAFAFA";
+        fontsize=12;
+
+        legend [label=<
+            <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="8" CELLPADDING="4">
+                <TR>
+                    <TD COLSPAN="2"><B>Relationship Types</B></TD>
+                </TR>
+                <TR>
+                    <TD>───────►</TD>
+                    <TD ALIGN="LEFT">1:1 관계 (One-to-One)</TD>
+                </TR>
+                <TR>
+                    <TD>────────&lt;</TD>
+                    <TD ALIGN="LEFT">1:N 관계 (One-to-Many)</TD>
+                </TR>
+                <TR>
+                    <TD COLSPAN="2"><B>Key Symbols</B></TD>
+                </TR>
+                <TR>
+                    <TD>🔑</TD>
+                    <TD ALIGN="LEFT">Primary Key</TD>
+                </TR>
+                <TR>
+                    <TD>🔗</TD>
+                    <TD ALIGN="LEFT">Foreign Key</TD>
+                </TR>
+                <TR>
+                    <TD COLSPAN="2"><B>Data Storage</B></TD>
+                </TR>
+                <TR>
+                    <TD COLSPAN="2" ALIGN="LEFT">In-Memory Dictionary<BR/>(서버 재시작 시 초기화)</TD>
+                </TR>
+            </TABLE>
+        >];
+    }
+
+    // 레이아웃 조정
+    {rank=same; users;}
+    {rank=same; plans; friendships; notifications; quiz_answers; auth_tokens; friend_codes;}
+    {rank=same; daily_schedule; quiz_item;}
+    {rank=same; tasks;}
+    {rank=same; materials;}
+}

@@ -1,0 +1,294 @@
+// Palearn System Architecture Diagram
+// (1) 전체적인 시스템 구조
+// 렌더링: dot -Tpng system_architecture.dot -o system_architecture.png
+
+digraph PalearnSystemArchitecture {
+    // 그래프 전역 설정
+    rankdir=TB;
+    compound=true;
+    fontname="Helvetica";
+    fontsize=14;
+    splines=ortho;
+    nodesep=0.8;
+    ranksep=1.0;
+
+    // 노드 기본 스타일
+    node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // ===== 클라이언트 레이어 =====
+    subgraph cluster_client {
+        label="📱 Flutter Mobile App (Frontend)";
+        style="rounded,filled";
+        fillcolor="#E3F2FD";
+        color="#1976D2";
+        fontsize=13;
+        fontcolor="#1976D2";
+
+        // 스크린 그룹
+        subgraph cluster_screens {
+            label="Screens (UI Layer)";
+            style="rounded,filled";
+            fillcolor="#BBDEFB";
+            color="#1565C0";
+
+            // 인증 관련 스크린
+            subgraph cluster_auth_screens {
+                label="Auth Screens";
+                style="rounded";
+                fillcolor="#E1F5FE";
+                splash [label="SplashScreen\n(splash_a.dart)", fillcolor="#FFFFFF"];
+                launch [label="LaunchScreen\n(launch_b_screen.dart)", fillcolor="#FFFFFF"];
+                login [label="LoginScreen\n(login_screen.dart)", fillcolor="#FFFFFF"];
+                signup [label="SignUpScreen\n(signup_screen.dart)", fillcolor="#FFFFFF"];
+            }
+
+            // 메인 기능 스크린
+            subgraph cluster_main_screens {
+                label="Main Feature Screens";
+                style="rounded";
+                fillcolor="#E1F5FE";
+                home [label="HomeScreen\n(home_screen.dart)", fillcolor="#FFFFFF"];
+                quiz [label="QuizScreen\n(quiz_screen.dart)", fillcolor="#FFFFFF"];
+                quiz_result [label="QuizResultScreen\n(quiz_result_screen.dart)", fillcolor="#FFFFFF"];
+                recommend_loading [label="RecommendLoadingScreen\n(recommend_loading_screen.dart)", fillcolor="#FFFFFF"];
+                recommend [label="RecommendCoursesScreen\n(recommend_courses_screen.dart)", fillcolor="#FFFFFF"];
+            }
+
+            // 학습 계획 스크린
+            subgraph cluster_plan_screens {
+                label="Plan Screens";
+                style="rounded";
+                fillcolor="#E1F5FE";
+                create_plan [label="CreatePlanScreen\n(create_plan_screen.dart)", fillcolor="#FFFFFF"];
+                loading_plan [label="LoadingPlanScreen\n(loading_plan_screen.dart)", fillcolor="#FFFFFF"];
+                plan_detail [label="PlanDetailScreen\n(plan_detail_screen.dart)", fillcolor="#FFFFFF"];
+                review [label="ReviewScreen\n(review_screen.dart)", fillcolor="#FFFFFF"];
+            }
+
+            // 소셜 기능 스크린
+            subgraph cluster_social_screens {
+                label="Social Screens";
+                style="rounded";
+                fillcolor="#E1F5FE";
+                friends [label="FriendsScreen\n(friends_screen.dart)", fillcolor="#FFFFFF"];
+                friend_detail [label="FriendDetailScreen\n(friend_detail_screen.dart)", fillcolor="#FFFFFF"];
+                notifications [label="NotificationsScreen\n(notifications_screen.dart)", fillcolor="#FFFFFF"];
+                profile [label="ProfileScreen\n(profile_screen.dart)", fillcolor="#FFFFFF"];
+                profile_edit [label="ProfileEditScreen\n(profile_edit_screen.dart)", fillcolor="#FFFFFF"];
+            }
+        }
+
+        // 데이터 레이어
+        subgraph cluster_data_layer {
+            label="Data Layer";
+            style="rounded,filled";
+            fillcolor="#BBDEFB";
+            color="#1565C0";
+
+            api_service [label="ApiService\n(api_service.dart)\n─────────────\n• AuthService\n• ProfileService\n• HomeService\n• QuizService\n• RecommendService\n• PlanService\n• FriendsService\n• NotificationService\n• ReviewService", shape=component, fillcolor="#FFF9C4"];
+            quiz_repo [label="QuizRepository\n(quiz_repository.dart)", fillcolor="#FFFFFF"];
+            quiz_mock [label="QuizRepositoryMock\n(quiz_repository_mock.dart)", fillcolor="#FFFFFF"];
+        }
+    }
+
+    // ===== 통신 레이어 =====
+    subgraph cluster_communication {
+        label="🔄 Communication Layer";
+        style="rounded,filled";
+        fillcolor="#FFF3E0";
+        color="#E65100";
+        fontsize=13;
+        fontcolor="#E65100";
+
+        http [label="HTTP/REST API\n(JSON)", shape=ellipse, fillcolor="#FFE0B2"];
+        bearer_token [label="Bearer Token\nAuthentication", shape=ellipse, fillcolor="#FFE0B2"];
+    }
+
+    // ===== 백엔드 레이어 =====
+    subgraph cluster_backend {
+        label="⚙️ FastAPI Backend Server";
+        style="rounded,filled";
+        fillcolor="#E8F5E9";
+        color="#388E3C";
+        fontsize=13;
+        fontcolor="#388E3C";
+
+        // 메인 애플리케이션
+        main_app [label="main.py\n(FastAPI Application)\n─────────────\n• CORS Middleware\n• Router Registration\n• Uvicorn Server", shape=component, fillcolor="#C8E6C9"];
+
+        // 라우터 그룹
+        subgraph cluster_routers {
+            label="Routers (API Endpoints)";
+            style="rounded,filled";
+            fillcolor="#A5D6A7";
+            color="#2E7D32";
+
+            router_auth [label="/auth\n(auth.py)\n• signup\n• login\n• logout", fillcolor="#FFFFFF"];
+            router_profile [label="/profile\n(profile.py)\n• me\n• update", fillcolor="#FFFFFF"];
+            router_home [label="/home\n(home.py)\n• header", fillcolor="#FFFFFF"];
+            router_quiz [label="/quiz\n(quiz.py)\n• items\n• grade", fillcolor="#FFFFFF"];
+            router_recommend [label="/recommend\n(recommend.py)\n• courses\n• search_status\n• select", fillcolor="#FFFFFF"];
+            router_plans [label="/plans\n(plans.py)\n• generate\n• all\n• date/{date}\n• task/update\n• related_materials", fillcolor="#FFFFFF"];
+            router_plan_apply [label="/plan\n(plan_apply.py)\n• apply_recommendation", fillcolor="#FFFFFF"];
+            router_friends [label="/friends\n(friends.py)\n• list\n• add\n• {id}/plans\n• {id}/plans/check", fillcolor="#FFFFFF"];
+            router_notifications [label="/notifications\n(notifications.py)\n• get\n• read", fillcolor="#FFFFFF"];
+            router_review [label="/review\n(review.py)\n• yesterday\n• topics", fillcolor="#FFFFFF"];
+        }
+
+        // 서비스 레이어
+        subgraph cluster_services {
+            label="Services (Business Logic)";
+            style="rounded,filled";
+            fillcolor="#A5D6A7";
+            color="#2E7D32";
+
+            gpt_service [label="gpt_service.py\n─────────────\n• generate_quiz()\n• generate_plan()\n• recommend_courses()\n• search_materials()", shape=component, fillcolor="#FFF9C4"];
+            web_search [label="web_search.py\n─────────────\n• search_youtube()\n• search_blog()\n• get_related_materials()", shape=component, fillcolor="#FFF9C4"];
+            store [label="store.py\n─────────────\n• InMemoryStore\n• Singleton Pattern", shape=component, fillcolor="#FFCDD2"];
+        }
+
+        // 모델 레이어
+        subgraph cluster_models {
+            label="Models (Pydantic Schemas)";
+            style="rounded,filled";
+            fillcolor="#A5D6A7";
+            color="#2E7D32";
+
+            schemas [label="schemas.py\n─────────────\n• Request Models\n• Response Models\n• Data Validation", shape=note, fillcolor="#E1BEE7"];
+        }
+
+        // 유틸리티
+        subgraph cluster_utils {
+            label="Utilities";
+            style="rounded";
+            fillcolor="#A5D6A7";
+
+            logger [label="logger.py\n(Structured Logging)", fillcolor="#FFFFFF"];
+        }
+    }
+
+    // ===== 외부 서비스 =====
+    subgraph cluster_external {
+        label="🌐 External Services";
+        style="rounded,filled";
+        fillcolor="#FCE4EC";
+        color="#C2185B";
+        fontsize=13;
+        fontcolor="#C2185B";
+
+        openai [label="OpenAI API\n─────────────\n• GPT-4o\n• GPT-5-search-api\n• gpt-4o-search-preview", shape=cylinder, fillcolor="#FFCDD2"];
+        youtube_api [label="YouTube\nData API v3", shape=cylinder, fillcolor="#FFCDD2"];
+        google_search [label="Google Custom\nSearch API", shape=cylinder, fillcolor="#FFCDD2"];
+    }
+
+    // ===== 데이터 저장소 =====
+    subgraph cluster_storage {
+        label="💾 Data Storage (In-Memory)";
+        style="rounded,filled";
+        fillcolor="#F3E5F5";
+        color="#7B1FA2";
+        fontsize=13;
+        fontcolor="#7B1FA2";
+
+        db_users [label="users\nDict[user_id, User]", shape=cylinder, fillcolor="#E1BEE7"];
+        db_plans [label="plans\nDict[user_id, List[Plan]]", shape=cylinder, fillcolor="#E1BEE7"];
+        db_friends [label="friendships\nDict[user_id, List[friend_id]]", shape=cylinder, fillcolor="#E1BEE7"];
+        db_notifications [label="notifications\nDict[user_id, {new, old}]", shape=cylinder, fillcolor="#E1BEE7"];
+        db_tokens [label="auth_tokens\nDict[token, user_id]", shape=cylinder, fillcolor="#E1BEE7"];
+        db_quiz [label="quiz_answers\nDict[user_id, List[Quiz]]", shape=cylinder, fillcolor="#E1BEE7"];
+        db_friend_codes [label="friend_codes\nDict[code, user_id]", shape=cylinder, fillcolor="#E1BEE7"];
+    }
+
+    // ===== 연결 관계 =====
+
+    // 스크린 네비게이션 플로우
+    splash -> launch [style=dashed, color="#1976D2"];
+    launch -> login [style=dashed, color="#1976D2"];
+    launch -> signup [style=dashed, color="#1976D2"];
+    login -> home [style=dashed, color="#1976D2"];
+    signup -> home [style=dashed, color="#1976D2"];
+
+    home -> quiz [style=dashed, color="#1976D2"];
+    home -> plan_detail [style=dashed, color="#1976D2"];
+    home -> friends [style=dashed, color="#1976D2"];
+    home -> notifications [style=dashed, color="#1976D2"];
+    home -> profile [style=dashed, color="#1976D2"];
+    home -> review [style=dashed, color="#1976D2"];
+
+    quiz -> quiz_result [style=dashed, color="#1976D2"];
+    quiz_result -> recommend_loading [style=dashed, color="#1976D2"];
+    recommend_loading -> recommend [style=dashed, color="#1976D2"];
+    recommend -> create_plan [style=dashed, color="#1976D2"];
+    create_plan -> loading_plan [style=dashed, color="#1976D2"];
+    loading_plan -> plan_detail [style=dashed, color="#1976D2"];
+
+    friends -> friend_detail [style=dashed, color="#1976D2"];
+    profile -> profile_edit [style=dashed, color="#1976D2"];
+
+    // API Service 연결
+    api_service -> http [lhead=cluster_communication, color="#E65100", penwidth=2];
+    http -> main_app [lhead=cluster_backend, color="#E65100", penwidth=2];
+
+    // 라우터 -> 메인 앱 연결
+    main_app -> router_auth [color="#388E3C"];
+    main_app -> router_profile [color="#388E3C"];
+    main_app -> router_home [color="#388E3C"];
+    main_app -> router_quiz [color="#388E3C"];
+    main_app -> router_recommend [color="#388E3C"];
+    main_app -> router_plans [color="#388E3C"];
+    main_app -> router_plan_apply [color="#388E3C"];
+    main_app -> router_friends [color="#388E3C"];
+    main_app -> router_notifications [color="#388E3C"];
+    main_app -> router_review [color="#388E3C"];
+
+    // 라우터 -> 서비스 연결
+    router_quiz -> gpt_service [color="#FFA000", style=dashed];
+    router_recommend -> gpt_service [color="#FFA000", style=dashed];
+    router_plans -> gpt_service [color="#FFA000", style=dashed];
+    router_plans -> web_search [color="#FFA000", style=dashed];
+    router_review -> web_search [color="#FFA000", style=dashed];
+    router_review -> gpt_service [color="#FFA000", style=dashed];
+
+    // 서비스 -> 외부 API 연결
+    gpt_service -> openai [color="#C2185B", penwidth=2];
+    web_search -> youtube_api [color="#C2185B", penwidth=2];
+    web_search -> google_search [color="#C2185B", penwidth=2];
+
+    // Store -> 데이터 저장소 연결
+    store -> db_users [color="#7B1FA2"];
+    store -> db_plans [color="#7B1FA2"];
+    store -> db_friends [color="#7B1FA2"];
+    store -> db_notifications [color="#7B1FA2"];
+    store -> db_tokens [color="#7B1FA2"];
+    store -> db_quiz [color="#7B1FA2"];
+    store -> db_friend_codes [color="#7B1FA2"];
+
+    // 라우터 -> Store 연결
+    router_auth -> store [color="#7B1FA2", style=dotted];
+    router_profile -> store [color="#7B1FA2", style=dotted];
+    router_home -> store [color="#7B1FA2", style=dotted];
+    router_quiz -> store [color="#7B1FA2", style=dotted];
+    router_plans -> store [color="#7B1FA2", style=dotted];
+    router_friends -> store [color="#7B1FA2", style=dotted];
+    router_notifications -> store [color="#7B1FA2", style=dotted];
+
+    // 범례
+    subgraph cluster_legend {
+        label="Legend";
+        style="rounded";
+        fillcolor="#FAFAFA";
+        fontsize=11;
+
+        leg1 [label="Screen Navigation", shape=plaintext];
+        leg2 [label="HTTP Communication", shape=plaintext];
+        leg3 [label="Service Call", shape=plaintext];
+        leg4 [label="External API", shape=plaintext];
+        leg5 [label="Data Access", shape=plaintext];
+
+        leg1 -> leg2 [style=dashed, color="#1976D2", label="  "];
+        leg2 -> leg3 [color="#E65100", penwidth=2, label="  "];
+        leg3 -> leg4 [color="#FFA000", style=dashed, label="  "];
+        leg4 -> leg5 [color="#C2185B", penwidth=2, label="  "];
+    }
+}
