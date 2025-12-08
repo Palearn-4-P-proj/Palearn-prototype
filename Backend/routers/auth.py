@@ -8,9 +8,9 @@ import re
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from Backend.models.schemas import SignupRequest, LoginRequest
-from Backend.services.store import store
-from Backend.utils.logger import log_request, log_stage, log_success, log_error, log_navigation
+from models.schemas import SignupRequest, LoginRequest
+from services.store import store
+from utils.logger import log_request, log_stage, log_success, log_error, log_navigation
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 limiter = Limiter(key_func=get_remote_address)

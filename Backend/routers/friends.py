@@ -5,9 +5,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Optional
 from datetime import date, datetime
 
-from Backend.models.schemas import AddFriendRequest, CheckFriendPlanRequest
-from Backend.services.store import store
-from Backend.utils.logger import log_request, log_stage, log_success, log_error, log_navigation
+from models.schemas import AddFriendRequest, CheckFriendPlanRequest
+from services.store import store
+from utils.logger import log_request, log_stage, log_success, log_error, log_navigation
 from .auth import get_current_user
 
 router = APIRouter(prefix="/friends", tags=["Friends"])

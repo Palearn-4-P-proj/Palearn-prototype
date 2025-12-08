@@ -4,10 +4,10 @@
 from fastapi import APIRouter, Depends
 from typing import Dict
 
-from Backend.models.schemas import QuizSubmitRequest
-from Backend.services.store import store
-from Backend.services.gpt_service import call_gpt, extract_json
-from Backend.utils.logger import log_request, log_stage, log_success, log_navigation
+from models.schemas import QuizSubmitRequest
+from services.store import store
+from services.gpt_service import call_gpt, extract_json
+from utils.logger import log_request, log_stage, log_success, log_navigation
 from .auth import get_current_user
 
 router = APIRouter(prefix="/quiz", tags=["Quiz"])

@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends
 from typing import Dict
 from datetime import datetime, timedelta
 
-from Backend.services.store import store
-from Backend.utils.logger import log_request, log_stage
+from services.store import store
+from utils.logger import log_request, log_stage
 from .auth import get_current_user
 
 router = APIRouter(prefix="/stats", tags=["Statistics"])

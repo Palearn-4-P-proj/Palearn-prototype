@@ -5,9 +5,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict
 import hashlib
 
-from Backend.models.schemas import ProfileUpdateRequest
-from Backend.services.store import store
-from Backend.utils.logger import log_request, log_stage, log_success, log_navigation
+from models.schemas import ProfileUpdateRequest
+from services.store import store
+from utils.logger import log_request, log_stage, log_success, log_navigation
 from .auth import get_current_user
 
 router = APIRouter(prefix="/profile", tags=["Profile"])

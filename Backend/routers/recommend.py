@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends
 from typing import Dict
 import uuid
 
-from Backend.models.schemas import SelectCourseRequest, ApplyRecommendationRequest
-from Backend.services.store import store
-from Backend.services.gpt_service import call_gpt, extract_json, get_search_status
-from Backend.utils.logger import log_request, log_stage, log_success, log_navigation, log_info
+from models.schemas import SelectCourseRequest, ApplyRecommendationRequest
+from services.store import store
+from services.gpt_service import call_gpt, extract_json, get_search_status
+from utils.logger import log_request, log_stage, log_success, log_navigation, log_info
 from .auth import get_current_user
 
 router = APIRouter(prefix="/recommend", tags=["Recommend"])

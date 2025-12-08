@@ -7,7 +7,7 @@ from typing import List, Dict
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
-from Backend.utils.logger import log_info, log_error, log_success
+from utils.logger import log_info, log_error, log_success
 
 load_dotenv()
 

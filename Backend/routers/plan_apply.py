@@ -6,11 +6,11 @@ from typing import Dict, List
 from datetime import datetime, timedelta
 import uuid
 
-from Backend.models.schemas import ApplyRecommendationRequest
-from Backend.services.store import store
-from Backend.services.gpt_service import call_gpt, extract_json
-from Backend.services.web_search import search_materials_for_topic
-from Backend.utils.logger import log_request, log_success, log_error, log_navigation, log_info
+from models.schemas import ApplyRecommendationRequest
+from services.store import store
+from services.gpt_service import call_gpt, extract_json
+from services.web_search import search_materials_for_topic
+from utils.logger import log_request, log_success, log_error, log_navigation, log_info
 from .auth import get_current_user
 
 router = APIRouter(prefix="/plan", tags=["Plan"])

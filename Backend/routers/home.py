@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends
 from typing import Dict
 from datetime import date
 
-from Backend.services.store import store
-from Backend.utils.logger import log_request, log_stage, log_navigation
+from services.store import store
+from utils.logger import log_request, log_stage, log_navigation
 from .auth import get_current_user
 
 router = APIRouter(prefix="/home", tags=["Home"])

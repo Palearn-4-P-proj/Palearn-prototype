@@ -7,7 +7,7 @@ import os
 from typing import Optional, Dict
 from dotenv import load_dotenv
 
-from Backend.utils.logger import log_info, log_error, log_gpt
+from utils.logger import log_info, log_error, log_gpt
 
 load_dotenv()
 
