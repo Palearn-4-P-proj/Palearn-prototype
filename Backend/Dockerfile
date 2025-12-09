@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# 소스 코드 전체 복사 (Backend 폴더 내용)
-COPY . .
+# Backend 폴더만 복사 (Railway는 루트에서 빌드)
+COPY Backend/ .
 
 # Python 의존성 설치
 RUN pip install --no-cache-dir -r requirements.txt
@@ -23,5 +23,5 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 ENV ENV=production
 
-# 서버 실행 (main.py 직접 실행)
+# 서버 실행
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
