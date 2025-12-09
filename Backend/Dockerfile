@@ -24,4 +24,4 @@ ENV PYTHONUNBUFFERED=1
 ENV ENV=production
 
 # 서버 실행 (main.py 직접 실행)
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
