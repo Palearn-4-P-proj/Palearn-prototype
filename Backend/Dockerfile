@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Backend 폴더만 복사 (Railway는 루트에서 빌드)
-COPY Backend/ .
+# 소스 코드 복사
+COPY . .
 
 # Python 의존성 설치
 RUN pip install --no-cache-dir -r requirements.txt
