@@ -1360,9 +1360,9 @@ class _TaskDetailSheetState extends State<_TaskDetailSheet> {
         'url': 'https://www.google.com/search?q=$encodedTitle',
       },
       {
-        'title': '네이버 블로그 검색',
-        'type': '블로그',
-        'url': 'https://search.naver.com/search.naver?where=post&query=$encodedTitle',
+        'title': '네이버에서 검색',
+        'type': '네이버',
+        'url': 'https://search.naver.com/search.naver?query=$encodedTitle',
       },
       {
         'title': 'Velog 검색',
@@ -1648,6 +1648,10 @@ class _TaskDetailSheetState extends State<_TaskDetailSheet> {
         return Colors.orange;
       case '공식문서':
         return Colors.blue;
+      case '구글':
+        return Colors.blue;
+      case '네이버':
+        return const Color(0xFF03C75A);
       default:
         return _blue;
     }
@@ -1661,6 +1665,10 @@ class _TaskDetailSheetState extends State<_TaskDetailSheet> {
         return Icons.article;
       case '공식문서':
         return Icons.description;
+      case '구글':
+        return Icons.search;
+      case '네이버':
+        return Icons.search;
       default:
         return Icons.link;
     }

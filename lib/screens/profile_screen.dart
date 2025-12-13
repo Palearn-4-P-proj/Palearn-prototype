@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../data/api_service.dart';
 import '../core/widgets.dart';
 import '../main.dart';
@@ -46,6 +47,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _logout() async {
+    // 로그아웃 확인 모달 표시
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃 하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7DB2FF),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     try {
       await AuthService.logout();
     } catch (e) {
@@ -97,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Spacer(),
 
                   const Text(
-                    'Profile',
+                    '프로필',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
                   ),
 
@@ -134,8 +161,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.w800, color: textColor)),
                       const SizedBox(height: 4),
-                      Text('ID: $userId',
-                          style: TextStyle(color: subTextColor)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('ID: $userId',
+                              style: TextStyle(color: subTextColor)),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: userId));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('친구 코드가 복사되었습니다'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            child: Icon(
+                              Icons.copy,
+                              size: 16,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
 
                       const SizedBox(height: 28),
 
@@ -169,7 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.logout_rounded,
                         label: '로그아웃',
                         onTap: _logout,
-                        danger: true,
                         bgColor: menuBgColor,
                         textColor: textColor,
                       ),

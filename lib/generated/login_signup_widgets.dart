@@ -115,7 +115,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 16,
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -165,7 +165,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                         child: Icon(
                           _obscurePassword ? Icons.visibility_off : Icons.visibility,
                           size: 20,
-                          color: _ink.withOpacity(.7),
+                          color: _ink.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -231,6 +231,14 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
   final _passwordController = TextEditingController();
   final _password2Controller = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscurePassword2 = true;
+
+  // 인라인 에러 메시지
+  String? _emailError;
+  String? _nameError;
+  String? _passwordError;
+  String? _password2Error;
 
   @override
   void dispose() {
@@ -239,6 +247,10 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
     _passwordController.dispose();
     _password2Controller.dispose();
     super.dispose();
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
   }
 
   /// 비밀번호 유효성 검사: 8자 이상, 대문자 1개 이상
@@ -258,28 +270,53 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
     final password = _passwordController.text;
     final password2 = _password2Controller.text;
 
-    if (email.isEmpty || name.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 필드를 입력하세요')),
-      );
-      return;
+    // 인라인 에러 초기화
+    setState(() {
+      _emailError = null;
+      _nameError = null;
+      _passwordError = null;
+      _password2Error = null;
+    });
+
+    bool hasError = false;
+
+    // 이메일 검증
+    if (email.isEmpty) {
+      setState(() => _emailError = '이메일을 입력하세요');
+      hasError = true;
+    } else if (!_isValidEmail(email)) {
+      setState(() => _emailError = '올바른 이메일 형식이 아닙니다');
+      hasError = true;
     }
 
-    // 비밀번호 유효성 검사
-    final passwordError = _validatePassword(password);
-    if (passwordError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(passwordError)),
-      );
-      return;
+    // 이름 검증
+    if (name.isEmpty) {
+      setState(() => _nameError = '이름을 입력하세요');
+      hasError = true;
     }
 
-    if (password != password2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('비밀번호가 일치하지 않습니다')),
-      );
-      return;
+    // 비밀번호 검증
+    if (password.isEmpty) {
+      setState(() => _passwordError = '비밀번호를 입력하세요');
+      hasError = true;
+    } else {
+      final pwError = _validatePassword(password);
+      if (pwError != null) {
+        setState(() => _passwordError = pwError);
+        hasError = true;
+      }
     }
+
+    // 비밀번호 확인 검증
+    if (password2.isEmpty) {
+      setState(() => _password2Error = '비밀번호 확인을 입력하세요');
+      hasError = true;
+    } else if (password != password2) {
+      setState(() => _password2Error = '비밀번호가 일치하지 않습니다');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     setState(() => _isLoading = true);
 
@@ -338,7 +375,7 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 16,
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -363,24 +400,52 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     const Text('이메일',
                         style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
-                    _RoundedField(hint: 'example@example.com', controller: _emailController),
+                    _RoundedField(
+                      hint: 'example@example.com',
+                      controller: _emailController,
+                      onChanged: (_) => setState(() => _emailError = null),
+                    ),
+                    if (_emailError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_emailError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
 
                     const SizedBox(height: 16),
                     const Text('이름',
                         style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
-                    _RoundedField(hint: '홍길동', controller: _nameController),
+                    _RoundedField(
+                      hint: '홍길동',
+                      controller: _nameController,
+                      onChanged: (_) => setState(() => _nameError = null),
+                    ),
+                    if (_nameError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_nameError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
 
                     const SizedBox(height: 16),
                     const Text('비밀번호',
                         style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
-                      hint: '••••••••',
-                      obscure: true,
+                      hint: '비밀번호 입력',
+                      obscure: _obscurePassword,
                       controller: _passwordController,
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) => setState(() => _passwordError = null),
+                      trailing: GestureDetector(
+                        onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                        child: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                          color: _ink.withAlpha(180),
+                        ),
+                      ),
                     ),
+                    if (_passwordError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_passwordError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
                     const SizedBox(height: 8),
                     PasswordStrengthIndicator(password: _passwordController.text),
 
@@ -388,7 +453,24 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     const Text('비밀번호 확인',
                         style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
-                    _RoundedField(hint: '••••••••', obscure: true, controller: _password2Controller),
+                    _RoundedField(
+                      hint: '비밀번호 확인 입력',
+                      obscure: _obscurePassword2,
+                      controller: _password2Controller,
+                      onChanged: (_) => setState(() => _password2Error = null),
+                      trailing: GestureDetector(
+                        onTap: () => setState(() => _obscurePassword2 = !_obscurePassword2),
+                        child: Icon(
+                          _obscurePassword2 ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                          color: _ink.withAlpha(180),
+                        ),
+                      ),
+                    ),
+                    if (_password2Error != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_password2Error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
 
                     const SizedBox(height: 24),
                     _isLoading

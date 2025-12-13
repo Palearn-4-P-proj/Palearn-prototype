@@ -43,6 +43,8 @@ async def update_profile(request: ProfileUpdateRequest, current_user: Dict = Dep
         user['name'] = request.name
     if request.birth:
         user['birth'] = request.birth
+    if request.photo_url:
+        user['photo_url'] = request.photo_url
     if request.password:
         user['password'] = hashlib.sha256(request.password.encode()).hexdigest()
 

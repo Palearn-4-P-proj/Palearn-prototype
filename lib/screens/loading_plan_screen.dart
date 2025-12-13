@@ -123,7 +123,7 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen>
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -150,7 +150,7 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen>
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: _blue.withOpacity(0.2),
+                  color: _blue.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -199,7 +199,7 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

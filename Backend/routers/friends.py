@@ -3,7 +3,7 @@
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from models.schemas import AddFriendRequest, CheckFriendPlanRequest
 from services.store import store
@@ -11,6 +11,10 @@ from utils.logger import log_request, log_stage, log_success, log_error, log_nav
 from .auth import get_current_user
 
 router = APIRouter(prefix="/friends", tags=["Friends"])
+
+# 응원하기 쓰로틀링 (user_id -> {friend_id: last_cheer_time})
+_cheer_throttle: Dict[str, Dict[str, datetime]] = {}
+CHEER_COOLDOWN_MINUTES = 5
 
 
 @router.get("")
@@ -124,7 +128,27 @@ async def check_friend_plan(
     request: CheckFriendPlanRequest,
     current_user: Dict = Depends(get_current_user)
 ):
-    """친구 응원하기"""
+    """친구 응원하기 (쓰로틀링 적용: 5분당 1회)"""
+    user_id = current_user['user_id']
+
+    # 쓰로틀링 확인
+    now = datetime.now()
+    if user_id not in _cheer_throttle:
+        _cheer_throttle[user_id] = {}
+
+    last_cheer = _cheer_throttle[user_id].get(friend_id)
+    if last_cheer:
+        time_diff = now - last_cheer
+        if time_diff < timedelta(minutes=CHEER_COOLDOWN_MINUTES):
+            remaining = CHEER_COOLDOWN_MINUTES - int(time_diff.total_seconds() / 60)
+            raise HTTPException(
+                status_code=429,
+                detail=f"잠시 후에 다시 응원할 수 있습니다. ({remaining}분 후)"
+            )
+
+    # 쓰로틀링 통과 - 응원 전송
+    _cheer_throttle[user_id][friend_id] = now
+
     friend = store.get_user_by_id(friend_id)
     if friend:
         store.add_notification(

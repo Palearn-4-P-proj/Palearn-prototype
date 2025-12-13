@@ -330,12 +330,15 @@ class ProfileService {
 
   /// 프로필 업데이트
   static Future<bool> updateProfile({
-    required String userId,
     String? email,
     String? name,
     String? birth,
+    String? photoUrl,
     String? password,
   }) async {
+    // 현재 사용자 ID 가져오기
+    final userId = await SecureTokenStorage.getUserId();
+
     await ApiClient.post(
       '/profile/update',
       body: {
@@ -343,6 +346,7 @@ class ProfileService {
         'email': email,
         'name': name,
         'birth': birth,
+        'photo_url': photoUrl,
         'password': password,
       },
     );

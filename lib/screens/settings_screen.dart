@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
 import '../data/api_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -14,11 +13,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = ThemeProvider.of(context);
-    final isDarkMode = themeProvider?.themeMode == ThemeMode.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? const Color(0xFFE5E5E5) : Colors.black87;
+    final subTextColor = isDark ? const Color(0xFFB0B0B0) : Colors.grey;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -59,20 +61,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   // 앱 설정 섹션
-                  _buildSectionTitle('앱 설정'),
+                  _buildSectionTitle('앱 설정', subTextColor),
                   const SizedBox(height: 12),
-
-                  // 다크 모드
-                  _buildSettingTile(
-                    icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                    title: '다크 모드',
-                    trailing: Switch(
-                      value: isDarkMode,
-                      onChanged: (_) => themeProvider?.toggleTheme(),
-                      activeTrackColor: const Color(0xFF7DB2FF),
-                      activeThumbColor: Colors.white,
-                    ),
-                  ),
 
                   // 알림 설정
                   _buildSettingTile(
@@ -84,12 +74,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       activeTrackColor: const Color(0xFF7DB2FF),
                       activeThumbColor: Colors.white,
                     ),
+                    cardColor: cardColor,
+                    textColor: textColor,
                   ),
 
                   const SizedBox(height: 24),
 
                   // 일반 섹션
-                  _buildSectionTitle('일반'),
+                  _buildSectionTitle('일반', subTextColor),
                   const SizedBox(height: 12),
 
                   // 캐시 삭제
@@ -97,12 +89,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.cleaning_services_outlined,
                     title: '캐시 삭제',
                     onTap: _clearCache,
+                    cardColor: cardColor,
+                    textColor: textColor,
                   ),
 
                   const SizedBox(height: 24),
 
                   // 정보 섹션
-                  _buildSectionTitle('정보'),
+                  _buildSectionTitle('정보', subTextColor),
                   const SizedBox(height: 12),
 
                   // 앱 버전
@@ -110,6 +104,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.info_outline,
                     title: '앱 버전',
                     subtitle: '1.0.0',
+                    cardColor: cardColor,
+                    textColor: textColor,
                   ),
 
                   // 이용약관
@@ -117,6 +113,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.description_outlined,
                     title: '이용약관',
                     onTap: () => Navigator.pushNamed(context, '/terms'),
+                    cardColor: cardColor,
+                    textColor: textColor,
                   ),
 
                   // 개인정보 처리방침
@@ -124,21 +122,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.privacy_tip_outlined,
                     title: '개인정보 처리방침',
                     onTap: () => Navigator.pushNamed(context, '/privacy'),
+                    cardColor: cardColor,
+                    textColor: textColor,
                   ),
 
                   const SizedBox(height: 24),
 
                   // 계정 섹션
-                  _buildSectionTitle('계정'),
+                  _buildSectionTitle('계정', subTextColor),
                   const SizedBox(height: 12),
-
-                  // 로그아웃
-                  _buildSettingTile(
-                    icon: Icons.logout,
-                    title: '로그아웃',
-                    titleColor: Colors.red,
-                    onTap: _logout,
-                  ),
 
                   // 회원 탈퇴
                   _buildSettingTile(
@@ -146,6 +138,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: '회원 탈퇴',
                     titleColor: Colors.red,
                     onTap: _showDeleteAccountDialog,
+                    cardColor: cardColor,
+                    textColor: textColor,
                   ),
                 ],
               ),
@@ -156,13 +150,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color color) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Colors.grey,
+        color: color,
       ),
     );
   }
@@ -174,11 +168,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget? trailing,
     VoidCallback? onTap,
     Color? titleColor,
+    Color cardColor = Colors.white,
+    Color textColor = Colors.black87,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconBgColor = isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE7F0FF);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -194,7 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFE7F0FF),
+            color: iconBgColor,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: const Color(0xFF7DB2FF), size: 22),
@@ -204,16 +203,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: titleColor ?? Colors.black87,
+            color: titleColor ?? textColor,
           ),
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle,
-                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFB0B0B0) : Colors.grey),
               )
             : null,
-        trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right, color: Colors.grey) : null),
+        trailing: trailing ?? (onTap != null ? Icon(Icons.chevron_right, color: isDark ? const Color(0xFFB0B0B0) : Colors.grey) : null),
         onTap: onTap,
       ),
     );
@@ -225,37 +224,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('캐시가 삭제되었습니다.')),
     );
-  }
-
-  void _logout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('로그아웃'),
-        content: const Text('정말 로그아웃 하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('로그아웃'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await AuthService.logout();
-      if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
-    }
   }
 
   void _showDeleteAccountDialog() {

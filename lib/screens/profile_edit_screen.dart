@@ -14,7 +14,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late TextEditingController birthCtrl;
   late TextEditingController pwCtrl;
   late TextEditingController pw2Ctrl;
-  late TextEditingController photoUrlCtrl;  // 프로필 사진 URL 입력용
+  late TextEditingController photoUrlCtrl;
 
   // ▶ 프로필 정보 — 서버에서 GET으로 받아와서 업데이트해야 할 부분
   String photoUrl =
@@ -23,6 +23,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   bool hidePw = true;
   bool hidePw2 = true;
+  bool _isLoading = false;
+
+  // 인라인 에러 메시지
+  String? _pwError;
+  String? _pw2Error;
 
   @override
   void initState() {
@@ -122,21 +127,70 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
+  /// 비밀번호 유효성 검사: 8자 이상, 대문자 1개 이상
+  String? _validatePassword(String password) {
+    if (password.isEmpty) return null; // 비밀번호 변경 안 함
+    if (password.length < 8) {
+      return '비밀번호는 8자 이상이어야 합니다';
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return '비밀번호에 대문자가 1개 이상 포함되어야 합니다';
+    }
+    return null;
+  }
+
   Future<void> _updateProfile() async {
-    // 비밀번호 확인 검증
-    if (pwCtrl.text.isNotEmpty && pwCtrl.text != pw2Ctrl.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
-      );
-      return;
+    // 비밀번호 유효성 검사
+    setState(() {
+      _pwError = null;
+      _pw2Error = null;
+    });
+
+    bool hasError = false;
+
+    if (pwCtrl.text.isNotEmpty) {
+      final pwValidation = _validatePassword(pwCtrl.text);
+      if (pwValidation != null) {
+        setState(() => _pwError = pwValidation);
+        hasError = true;
+      }
+
+      if (pw2Ctrl.text.isEmpty) {
+        setState(() => _pw2Error = '비밀번호 확인을 입력하세요');
+        hasError = true;
+      } else if (pwCtrl.text != pw2Ctrl.text) {
+        setState(() => _pw2Error = '비밀번호가 일치하지 않습니다');
+        hasError = true;
+      }
     }
 
-    // TODO: 실제 서버 POST 연결 필요
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('프로필이 업데이트되었습니다.')),
-    );
-    Navigator.pop(context);
+    if (hasError) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 실제 서버 API 호출
+      await ProfileService.updateProfile(
+        name: nameCtrl.text,
+        email: emailCtrl.text,
+        birth: birthCtrl.text,
+        photoUrl: photoUrl,
+        password: pwCtrl.text.isNotEmpty ? pwCtrl.text : null,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('프로필이 업데이트되었습니다.')),
+      );
+      Navigator.pop(context, true); // true를 반환하여 업데이트됨을 알림
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('프로필 업데이트 실패: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _showPhotoUrlDialog() {
@@ -324,22 +378,34 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     ),
                     _field(
                       label: '비밀번호',
-                      child: TextField(
-                        controller: pwCtrl,
-                        obscureText: hidePw,
-                        decoration: _decoration(null).copyWith(
-                          suffixIcon: IconButton(
-                            icon: Icon(hidePw
-                                ? Icons.visibility_off
-                                : Icons.visibility),
-                            onPressed: () =>
-                                setState(() => hidePw = !hidePw),
+                      error: _pwError,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextField(
+                            controller: pwCtrl,
+                            obscureText: hidePw,
+                            onChanged: (_) => setState(() {}),
+                            decoration: _decoration(null).copyWith(
+                              suffixIcon: IconButton(
+                                icon: Icon(hidePw
+                                    ? Icons.visibility_off
+                                    : Icons.visibility),
+                                onPressed: () =>
+                                    setState(() => hidePw = !hidePw),
+                              ),
+                            ),
                           ),
-                        ),
+                          if (pwCtrl.text.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            _buildPasswordStrengthIndicator(pwCtrl.text),
+                          ],
+                        ],
                       ),
                     ),
                     _field(
                       label: '비밀번호 확인',
+                      error: _pw2Error,
                       child: TextField(
                         controller: pw2Ctrl,
                         obscureText: hidePw2,
@@ -361,17 +427,27 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _updateProfile,
+                        onPressed: _isLoading ? null : _updateProfile,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7DB2FF),
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFF7DB2FF).withValues(alpha: 0.6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                           padding:
                           const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: const Text('프로필 업데이트', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text('프로필 업데이트', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -384,7 +460,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
-  Widget _field({required String label, required Widget child}) {
+  Widget _field({required String label, required Widget child, String? error}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -393,8 +469,71 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           Text(label),
           const SizedBox(height: 6),
           child,
+          if (error != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              error,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildPasswordStrengthIndicator(String password) {
+    int strength = 0;
+    String label = '약함';
+    Color color = Colors.red;
+
+    if (password.length >= 8) strength++;
+    if (password.contains(RegExp(r'[A-Z]'))) strength++;
+    if (password.contains(RegExp(r'[0-9]'))) strength++;
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength++;
+
+    if (strength == 1) {
+      label = '약함';
+      color = Colors.red;
+    } else if (strength == 2) {
+      label = '보통';
+      color = Colors.orange;
+    } else if (strength == 3) {
+      label = '강함';
+      color = Colors.lightGreen;
+    } else if (strength >= 4) {
+      label = '매우 강함';
+      color = Colors.green;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: strength / 4,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  minHeight: 6,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '8자 이상, 대문자 포함 필수',
+          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+        ),
+      ],
     );
   }
 

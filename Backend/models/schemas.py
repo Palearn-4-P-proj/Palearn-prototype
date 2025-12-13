@@ -24,6 +24,7 @@ class ProfileUpdateRequest(BaseModel):
     email: Optional[str] = None
     name: Optional[str] = None
     birth: Optional[str] = None
+    photo_url: Optional[str] = None
     password: Optional[str] = None
 
 
