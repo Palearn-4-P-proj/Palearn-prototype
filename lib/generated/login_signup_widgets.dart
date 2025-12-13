@@ -329,11 +329,28 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
         birth: '2000-01-01',
       );
 
+      // 회원가입 성공 후 자동 로그인
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
+        try {
+          final loginResult = await AuthService.login(email: email, password: password);
+          if (loginResult['success'] == true && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('회원가입 성공!')),
+            );
+            Navigator.pushReplacementNamed(context, '/home');
+            return;
+          }
+        } catch (loginError) {
+          debugPrint('Auto-login failed: $loginError');
+        }
+
+        // 자동 로그인 실패 시 로그인 화면으로
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('회원가입 성공! 로그인해주세요.')),
+          );
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       }
     } catch (e) {
       if (mounted) {
