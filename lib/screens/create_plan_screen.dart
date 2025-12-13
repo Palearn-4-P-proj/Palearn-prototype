@@ -74,6 +74,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
       return;
     }
 
+    // 모든 요일을 쉬는 날로 선택한 경우 경고
+    if (restDays.length == weekDays.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 요일을 쉬는 날로 지정할 수 없습니다.')),
+      );
+      return;
+    }
+
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => LoadingPlanScreen(
         skill: selectedSkill!,

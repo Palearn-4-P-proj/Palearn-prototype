@@ -163,7 +163,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                         child: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
                           size: 20,
                           color: _ink.withValues(alpha: 0.7),
                         ),
@@ -436,7 +436,7 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                         child: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
                           size: 20,
                           color: _ink.withAlpha(180),
                         ),
@@ -461,7 +461,7 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword2 = !_obscurePassword2),
                         child: Icon(
-                          _obscurePassword2 ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword2 ? Icons.visibility : Icons.visibility_off,
                           size: 20,
                           color: _ink.withAlpha(180),
                         ),

@@ -93,9 +93,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
             // 알림 목록
             Expanded(
               child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-
             // 새로운 알림
             const Row(
               children: [

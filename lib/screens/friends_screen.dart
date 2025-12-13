@@ -183,7 +183,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.badge_outlined, color: _blue),
+                      const Icon(Icons.person_outline_rounded, color: _blue),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

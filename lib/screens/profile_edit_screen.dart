@@ -193,6 +193,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
+  static const String _defaultPhotoUrl = 'https://i.pravatar.cc/150?img=1';
+
   void _showPhotoUrlDialog() {
     photoUrlCtrl.text = photoUrl;
     showDialog(
@@ -239,6 +241,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   ),
                 ),
               ),
+            const SizedBox(height: 12),
+            // 기본값 복귀 버튼
+            TextButton.icon(
+              onPressed: () {
+                photoUrlCtrl.text = _defaultPhotoUrl;
+                Navigator.pop(ctx);
+                _showPhotoUrlDialog(); // 다이얼로그 다시 열기
+              },
+              icon: const Icon(Icons.restore, size: 18),
+              label: const Text('기본 이미지로 복귀'),
+            ),
           ],
         ),
         actions: [
@@ -268,8 +281,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final textColor = isDark ? const Color(0xFFE5E5E5) : Colors.black;
+    final subTextColor = isDark ? const Color(0xFFB0B0B0) : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -338,11 +356,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
                     const SizedBox(height: 10),
                     Text(nameCtrl.text,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w800)),
+                            fontWeight: FontWeight.w800,
+                            color: textColor)),
                     Text('ID: $userId',
-                        style: const TextStyle(color: Colors.black54)),
+                        style: TextStyle(color: subTextColor)),
                     const SizedBox(height: 18),
 
                     _field(
@@ -389,8 +408,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                             decoration: _decoration(null).copyWith(
                               suffixIcon: IconButton(
                                 icon: Icon(hidePw
-                                    ? Icons.visibility_off
-                                    : Icons.visibility),
+                                    ? Icons.visibility
+                                    : Icons.visibility_off),
                                 onPressed: () =>
                                     setState(() => hidePw = !hidePw),
                               ),
@@ -412,8 +431,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         decoration: _decoration(null).copyWith(
                           suffixIcon: IconButton(
                             icon: Icon(hidePw2
-                                ? Icons.visibility_off
-                                : Icons.visibility),
+                                ? Icons.visibility
+                                : Icons.visibility_off),
                             onPressed: () =>
                                 setState(() => hidePw2 = !hidePw2),
                           ),
@@ -461,12 +480,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
   Widget _field({required String label, required Widget child, String? error}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? const Color(0xFFE5E5E5) : Colors.black;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label),
+          Text(label, style: TextStyle(color: textColor)),
           const SizedBox(height: 6),
           child,
           if (error != null) ...[
@@ -538,10 +560,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
   InputDecoration _decoration(String? hint) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldBgColor = isDark ? const Color(0xFF1E3A5F) : const Color(0xFFD6E6FA);
+    final hintColor = isDark ? const Color(0xFF808080) : Colors.grey;
+
     return InputDecoration(
       hintText: hint,
+      hintStyle: TextStyle(color: hintColor),
       filled: true,
-      fillColor: const Color(0xFFD6E6FA),
+      fillColor: fieldBgColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
