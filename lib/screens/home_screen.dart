@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/api_service.dart';
 import '../core/widgets.dart';
@@ -995,7 +994,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Icon(Icons.calendar_month, color: _blue, size: 22),
               const SizedBox(width: 8),
               Text(
-                '월간 캘린더',
+                '학습 캘린더',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1027,8 +1026,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Column(
             children: [
+              // 월 선택 헤더
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
                     onPressed: () => setState(() => _focusedMonth = DateTime(
@@ -1047,61 +1047,165 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              TableCalendar(
-                focusedDay: _focusedMonth,
-                firstDay: DateTime(_focusedMonth.year - 1, 1, 1),
-                lastDay: DateTime(_focusedMonth.year + 1, 12, 31),
-                headerVisible: false,
-                rowHeight: 52,
-                daysOfWeekHeight: 28,
-                availableGestures: AvailableGestures.horizontalSwipe,
-                // 스와이프로 월 변경 시 제목 동기화
-                onPageChanged: (focusedDay) {
-                  setState(() {
-                    _focusedMonth = focusedDay;
-                  });
-                },
-                calendarStyle: CalendarStyle(
-                  todayDecoration:
-                      const BoxDecoration(color: _blue, shape: BoxShape.circle),
-                  todayTextStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  defaultTextStyle: TextStyle(fontSize: 14, color: textColor),
-                  weekendTextStyle:
-                      const TextStyle(fontSize: 14, color: Colors.redAccent),
-                  cellMargin: const EdgeInsets.all(2),
-                ),
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: TextStyle(fontSize: 13, color: subTextColor),
-                  weekendStyle:
-                      const TextStyle(fontSize: 13, color: Colors.redAccent),
-                ),
-                calendarBuilders: CalendarBuilders(
-                  defaultBuilder: (context, day, focusedDay) {
-                    return _buildCalendarDay(day, isToday: false, isWeekend: day.weekday >= 6, textColor: textColor);
-                  },
-                  todayBuilder: (context, day, focusedDay) {
-                    return _buildCalendarDay(day, isToday: true, isWeekend: false, textColor: textColor);
-                  },
-                  outsideBuilder: (context, day, focusedDay) {
-                    return _buildCalendarDay(day, isToday: false, isWeekend: false, isOutside: true, textColor: textColor);
-                  },
-                ),
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _focusedMonth = focusedDay;
-                  });
-                  _showDayPlanDialog(selectedDay);
-                },
+              const SizedBox(height: 8),
+              // 요일 헤더
+              Row(
+                children: ['일', '월', '화', '수', '목', '금', '토'].map((day) {
+                  final isWeekend = day == '일' || day == '토';
+                  return Expanded(
+                    child: Center(
+                      child: Text(
+                        day,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isWeekend ? Colors.redAccent : subTextColor,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
+              const SizedBox(height: 8),
+              // 커스텀 캘린더 그리드
+              _buildCustomCalendarGrid(isDark, textColor, subTextColor),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildCustomCalendarGrid(bool isDark, Color textColor, Color subTextColor) {
+    final firstDayOfMonth = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
+    final lastDayOfMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
+    final firstWeekday = firstDayOfMonth.weekday % 7; // 일요일 = 0
+    final daysInMonth = lastDayOfMonth.day;
+    final today = DateTime.now();
+
+    // 캘린더에 표시할 총 셀 수 계산 (6주 * 7일 = 42)
+    const totalCells = 42;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        childAspectRatio: 1.0,
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
+      ),
+      itemCount: totalCells,
+      itemBuilder: (context, index) {
+        final dayOffset = index - firstWeekday;
+        final day = dayOffset + 1;
+
+        // 이전/다음 달 날짜 처리
+        if (day < 1 || day > daysInMonth) {
+          return const SizedBox();
+        }
+
+        final currentDate = DateTime(_focusedMonth.year, _focusedMonth.month, day);
+        final dateStr = currentDate.toIso8601String().split('T')[0];
+        final isToday = currentDate.year == today.year &&
+            currentDate.month == today.month &&
+            currentDate.day == today.day;
+        final isWeekend = currentDate.weekday == 6 || currentDate.weekday == 7;
+
+        // 해당 날짜의 태스크 정보 가져오기
+        final taskCount = _taskCountByDate[dateStr] ?? 0;
+        final completedCount = _getCompletedCountForDate(dateStr);
+        final hasAllCompleted = taskCount > 0 && completedCount == taskCount;
+        final hasPartialCompleted = taskCount > 0 && completedCount > 0 && completedCount < taskCount;
+
+        return GestureDetector(
+          onTap: () => _showDayPlanDialog(currentDate),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isToday
+                  ? _blue
+                  : hasAllCompleted
+                      ? _green.withAlpha(30)
+                      : hasPartialCompleted
+                          ? _blue.withAlpha(20)
+                          : null,
+              borderRadius: BorderRadius.circular(8),
+              border: taskCount > 0 && !isToday
+                  ? Border.all(
+                      color: hasAllCompleted ? _green : _blue.withAlpha(100),
+                      width: 1.5,
+                    )
+                  : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 날짜 숫자
+                Text(
+                  '$day',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+                    color: isToday
+                        ? Colors.white
+                        : isWeekend
+                            ? Colors.redAccent
+                            : textColor,
+                  ),
+                ),
+                // 태스크 표시 (있을 때만)
+                if (taskCount > 0) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 완료 상태 아이콘
+                      if (hasAllCompleted)
+                        Icon(
+                          Icons.check_circle,
+                          size: 10,
+                          color: isToday ? Colors.white : _green,
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isToday ? Colors.white.withAlpha(50) : _blue.withAlpha(30),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '$completedCount/$taskCount',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: isToday ? Colors.white : _blue,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 특정 날짜의 완료된 태스크 수 계산
+  int _getCompletedCountForDate(String dateStr) {
+    int completed = 0;
+    for (final plan in myPlans) {
+      final schedule = plan['daily_schedule'] as List? ?? [];
+      for (final day in schedule) {
+        if (day['date'] == dateStr) {
+          final tasks = day['tasks'] as List? ?? [];
+          completed += tasks.where((t) => t['completed'] == true).length;
+        }
+      }
+    }
+    return completed;
   }
 
   Future<void> _showDayPlanDialog(DateTime selectedDay) async {
@@ -1246,68 +1350,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('닫기'),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCalendarDay(DateTime day, {
-    required bool isToday,
-    required bool isWeekend,
-    bool isOutside = false,
-    Color? textColor,
-  }) {
-    final dateStr = day.toIso8601String().split('T')[0];
-    final taskCount = _taskCountByDate[dateStr] ?? 0;
-    final defaultTextColor = textColor ?? _ink;
-
-    return Container(
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: isToday ? _blue : null,
-        shape: BoxShape.circle,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // 날짜 숫자
-          Text(
-            '${day.day}',
-            style: TextStyle(
-              fontSize: 14,
-              color: isOutside
-                  ? Colors.grey[400]
-                  : isToday
-                      ? Colors.white
-                      : isWeekend
-                          ? Colors.redAccent
-                          : defaultTextColor,
-              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          // 태스크 개수 표시 (오른쪽 아래)
-          if (taskCount > 0 && !isOutside)
-            Positioned(
-              right: 4,
-              bottom: 4,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: isToday ? Colors.white : _blue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  taskCount > 9 ? '9+' : '$taskCount',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: isToday ? _blue : Colors.white,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

@@ -39,12 +39,26 @@ async def get_related_materials(topic: str, current_user: Dict = Depends(get_cur
 - example.com, example.org 등 EXAMPLE이 들어간 모든 URL 절대 사용 금지
 - 존재하지 않는 가상의 자료 생성 금지
 - 반드시 실제 접근 가능한 URL만 제공
+(404, 500, "Page Not Found", "존재하지 않는 페이지" 등이 보이면 그 자료는 사용하면 안 됩니다.)
+- 검색 결과 페이지, 채널/목록/카테고리 페이지 사용 금지
+- 예: google.com/search, search.naver.com, youtube.com/results
+- 예: URL에 ?q=, ?query=, ?search_query= 가 포함된 경우
+- 예: /tag/, /category/, /topics/, /series/, /channel/, /playlist 등
+- **URL을 스스로 만들어 내거나 규칙으로 추측해서 조합하지 마세요.**
+- 도메인 + 강좌/문서 제목을 이어붙여서 새 URL을 만드는 방식은 금지입니다.
+- **description 필드 안에 URL·도메인·링크를 절대 넣지 마세요.**
+- http, https, www, .com, .org, youtu 같은 문자열이 들어가면 안 됩니다.
+- `[텍스트](URL)` 형태의 마크다운 링크도 금지입니다.
 
 📚 **검색 대상**:
 - 유튜브 강의 영상 (한국어 또는 영어)
+- 가능하면 https://www.youtube.com/watch?v=... 또는 https://youtu.be/... 형태의 개별 영상 페이지
 - 기술 블로그 (velog, tistory, medium 등)
+- 목록/태그 페이지가 아닌, 실제 글 상세 페이지
 - 공식 문서
+- 라이브러리/언어/프레임워크의 특정 기능이나 개념을 설명하는 문서 페이지
 - 온라인 강좌
+- 인프런, 유데미, 클래스101, 부스트코스 등 강좌 상세 페이지
 
 ⚠️ **필수 출력 형식** (JSON):
 ```json
@@ -54,22 +68,25 @@ async def get_related_materials(topic: str, current_user: Dict = Depends(get_cur
       "title": "자료 제목",
       "type": "유튜브",
       "url": "https://실제URL",
-      "description": "이 자료가 학습에 도움이 되는 이유"
+      "description": "이 자료가 학습에 도움이 되는 이유 (URL 없이 한국어 1~2문장)"
     }},
     {{
       "title": "자료 제목",
       "type": "블로그",
       "url": "https://실제URL",
-      "description": "이 자료가 학습에 도움이 되는 이유"
+      "description": "이 자료가 학습에 도움이 되는 이유 (URL 없이 한국어 1~2문장)"
     }}
   ]
 }}
 ```
 
-📌 **요청사항**:
+📌 요청사항:
 - 총 3-4개의 학습 자료 추천
 - 다양한 타입의 자료 포함 (유튜브, 블로그, 공식문서 등)
 - 반드시 한국어 또는 영어로 된 실제 자료
+- title과 description은 한국어로 자연스럽게 작성
+- description에는 어떤 형태의 URL·도메인·링크도 넣지 말 것
+- URL은 반드시 실제로 접속이 되는 상세 페이지 URL만 사용 (검색·목록·채널 페이지 금지)
 """
 
     response = call_gpt(prompt, use_search=True)
@@ -227,44 +244,79 @@ async def generate_plan(request: PlanGenerateRequest, current_user: Dict = Depen
     rest_days_str = ', '.join(request.restDays) if request.restDays else '없음'
     rest_days_list = request.restDays if request.restDays else []
 
-    prompt = f"""
-학습 계획을 만들어주세요.
+    prompt = f"""[시스템 지시]
+당신은 개인 맞춤형 학습 플래너입니다.
+출력 속도를 최우선으로 하여 4주(28일) 학습 일정을 생성하세요.
+반드시 JSON만 출력하고, 불필요한 설명이나 창의적 표현은 하지 마세요.
 
-조건:
-- 스킬: {request.skill}
+[입력 정보]
+- 스킬: "{request.skill}"
 - 하루 공부 시간: {request.hourPerDay}시간
 - 시작 날짜: {request.startDate}
-- 쉬는 요일: {rest_days_str} (이 요일에는 절대 학습 일정을 넣지 마세요!)
+- 쉬는 요일: {rest_days_str}
 - 학습자 수준: {request.selfLevel}
 
-⚠️ 중요: 쉬는 요일({rest_days_str})에는 절대로 학습 일정을 배정하지 마세요!
-예를 들어 쉬는 요일이 '월, 수, 금'이면 화, 목, 토, 일에만 학습 일정을 넣어야 합니다.
+────────────────────────
+[쉬는 요일 규칙 – 매우 중요]
 
-반드시 아래 JSON 형식으로만 응답해주세요:
-```json
-{{
-  "plan_name": "{request.skill} 학습 계획",
-  "total_duration": "4주",
-  "daily_schedule": [
-    {{
-      "date": "YYYY-MM-DD",
-      "tasks": [
-        {{
-          "id": "uuid",
-          "title": "학습 내용",
-          "description": "상세 설명",
-          "duration": "1시간",
-          "completed": false
-        }}
-      ]
-    }}
-  ]
-}}
-```
+쉬는 요일: {rest_days_str}
 
-{request.startDate}부터 4주간의 일정을 만들되, 쉬는 요일({rest_days_str})은 반드시 제외해주세요.
-하루에 {int(request.hourPerDay)}시간에 맞춰 2-3개의 구체적인 학습 태스크를 배정해주세요.
-"""
+⚠️ 위 쉬는 요일에 해당하는 날짜는 daily_schedule에서 **절대 포함하지 마세요!**
+- 요일 매핑: 월=Monday, 화=Tuesday, 수=Wednesday, 목=Thursday, 금=Friday, 토=Saturday, 일=Sunday
+- 예시: 쉬는 요일이 "월, 수, 금"이면 → 화, 목, 토, 일에만 일정 배정
+
+────────────────────────
+[속도 최적화 규칙]
+
+1. 하루 태스크 수는 **항상 2개로 고정**
+2. duration은 아래 값 중 하나만 사용
+   - "30분"
+   - "1시간"
+3. description은 **항상 1문장**
+   - 학습 방법을 간단히 설명
+   - 창의적인 표현, 비유, 감정 표현 금지
+4. 태스크 구성은 날짜별로 **유사한 패턴 반복을 허용**
+   - 매일 완전히 새로운 표현을 만들려고 하지 마세요.
+
+────────────────────────
+[기간/날짜 규칙]
+- 시작 날짜부터 정확히 4주(28일)
+- 쉬는 요일은 daily_schedule에서 제외
+- 날짜는 오름차순 정렬
+- 같은 날짜 중복 금지
+
+────────────────────────
+[난이도 흐름]
+- 1주차: 기초 개념
+- 2주차: 기본 실습
+- 3주차: 응용/심화
+- 4주차: 정리 및 미니 프로젝트
+
+────────────────────────
+[출력 JSON 스키마]
+최상위 객체:
+- plan_name
+- total_duration: "4주"
+- daily_schedule
+
+daily_schedule 원소:
+- date: "YYYY-MM-DD"
+- tasks: 길이 2 고정 배열
+
+task 객체:
+- id: 문자열
+- title: 구체적인 학습 주제
+- description: 1문장 설명
+- duration: "30분" 또는 "1시간"
+- completed: false
+
+────────────────────────
+[엄격한 제약]
+- 마크다운, 코드블록, 설명 문장 금지
+- JSON 하나만 출력
+- 규칙을 지키는 것이 완성도보다 우선
+
+지금 바로 JSON만 출력하세요."""
 
     response = call_gpt(prompt, use_search=False)
     data = extract_json(response)

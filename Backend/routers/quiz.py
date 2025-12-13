@@ -24,44 +24,36 @@ async def get_quiz_items(
     log_stage(4, "퀴즈 시작", current_user['name'])
     log_navigation(current_user['name'], "퀴즈 화면")
 
-    # Flask 기반 프롬프트 - O/X 퀴즈 + explanation
-    prompt = f"""
-'{skill}' 분야의 {level} 수준에 맞는 O/X 퀴즈 10개를 정성스럽게 만들어드리겠습니다.
+    # 강화된 프롬프트 - O/X 퀴즈 + explanation
+    prompt = f"""[시스템 지시]
+당신은 '{skill}' 분야의 개념 이해도를 점검하는 OX 퀴즈 출제기입니다.
+오직 JSON만 출력하세요. (마크다운/코드블록/설명 금지)
 
-📌 **중요 규칙**:
-1. 각 문제는 반드시 O(참) 또는 X(거짓)로 명확히 답할 수 있어야 합니다.
-2. '{skill}' 분야의 핵심 개념을 다루는 문제를 출제해주세요.
-3. {level} 수준에 맞는 난이도로 조절해주세요.
-4. 각 문제에는 반드시 "왜 정답인지/오답인지" 설명하는 explanation을 포함해주세요.
+[목표]
+- {level} 학습자용 '{skill}' OX 퀴즈 10개 생성
 
-⚠️ **필수 출력 형식** (JSON):
-```json
-{{
-  "quizzes": [
-    {{
-      "id": 1,
-      "type": "OX",
-      "question": "질문 내용",
-      "options": [],
-      "answerKey": "O",
-      "explanation": "이 문제의 정답이 O인 이유는... (상세 해설)"
-    }},
-    {{
-      "id": 2,
-      "type": "OX",
-      "question": "질문 내용",
-      "options": [],
-      "answerKey": "X",
-      "explanation": "이 문제의 정답이 X인 이유는... (상세 해설)"
-    }}
-  ]
-}}
-```
+[핵심 규칙]
+1) 모든 문항은 '{skill}'의 핵심 개념/용어/상황을 반드시 포함해야 합니다.
+   - 각 question에 '{skill}' 관련 키워드(개념명/용어/기술/문제상황) 최소 1개 포함
+2) 일반상식/컴퓨터기초/역사/시사/언어상식 같은 "도메인 외 상식 문제"는 절대 금지.
+   - 금지 예: RAM/HTML/CPU/IP 같은 범용 IT 상식(단, '{skill}'에 직접적으로 필수인 경우만 허용)
+3) OX로 명확히 판별 가능해야 하며, 애매한 표현("대부분", "가끔", "상황에 따라") 금지
+4) explanation은 1~2문장으로 짧고 명확하게(속도 우선)
 
-반드시 10개의 O/X 퀴즈를 만들어주세요.
-answerKey는 반드시 "O" 또는 "X" 중 하나여야 합니다.
-explanation은 학습에 도움이 되도록 상세하게 작성해주세요.
-"""
+[난이도]
+- {level} 수준에 맞춘 개념으로 구성
+- 너무 사소한 암기형보다 "헷갈리기 쉬운 개념/오해 포인트" 위주
+
+[반드시 따를 스키마]
+{{"quizzes":[
+  {{"id":1,"type":"OX","question":"...","options":[],"answerKey":"O","explanation":"..."}},
+  ...
+  {{"id":10,"type":"OX","question":"...","options":[],"answerKey":"X","explanation":"..."}}
+]}}
+- quizzes 길이 = 10, id=1..10, type="OX", options=[]
+- answerKey는 "O" 또는 "X"만
+
+오직 JSON만 출력하세요."""
 
     response = call_gpt(prompt, use_search=False)
     data = extract_json(response)
