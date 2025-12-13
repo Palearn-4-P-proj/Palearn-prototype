@@ -264,7 +264,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
 }
 
 class _Labeled extends StatelessWidget {
-  const _Labeled(this.text, {super.key});
+  const _Labeled(this.text);
   final String text;
 
   @override
@@ -285,7 +285,7 @@ class _Labeled extends StatelessWidget {
 }
 
 class _Rounded extends StatelessWidget {
-  const _Rounded({required this.child, super.key});
+  const _Rounded({required this.child});
   final Widget child;
 
   @override

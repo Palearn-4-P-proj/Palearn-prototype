@@ -653,7 +653,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen> {
                         }),
                       ] else ...[
                         // 기존 형식: 문자열 리스트
-                        ...(rawCurriculum as List).asMap().entries.map((entry) {
+                        ...rawCurriculum.asMap().entries.map((entry) {
                           final idx = entry.key;
                           final item = entry.value.toString();
                           final isSection = item.startsWith('섹션') ||

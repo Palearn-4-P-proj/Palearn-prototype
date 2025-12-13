@@ -64,8 +64,11 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       bottomNavigationBar: const CommonBottomNav(currentItem: NavItem.home),
       body: SafeArea(
         child: RefreshIndicator(
@@ -84,7 +87,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                   TabBar(
                     controller: _tabController,
                     labelColor: _blue,
-                    unselectedLabelColor: Colors.grey,
+                    unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey,
                     indicatorColor: _blue,
                     indicatorWeight: 3,
                     tabs: const [
@@ -93,6 +96,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                       Tab(text: '업적'),
                     ],
                   ),
+                  isDark: isDark,
                 ),
               ),
 
@@ -687,8 +691,9 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
 // Sticky TabBar Delegate
 class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
+  final bool isDark;
 
-  _StickyTabBarDelegate(this.tabBar);
+  const _StickyTabBarDelegate(this.tabBar, {this.isDark = false});
 
   @override
   double get minExtent => tabBar.preferredSize.height;
@@ -699,11 +704,11 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: const Color(0xFFF7F8FD),
+      color: isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD),
       child: tabBar,
     );
   }
 
   @override
-  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) => false;
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) => oldDelegate.isDark != isDark;
 }

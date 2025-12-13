@@ -3,7 +3,6 @@ import '../data/api_service.dart';
 
 const _blue = Color(0xFF7DB2FF);
 const _ink = Color(0xFF0E3E3E);
-const _light = Color(0xFFF7F8FD);
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -53,14 +52,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final textColor = isDark ? const Color(0xFFE5E5E5) : _ink;
+    final subTextColor = isDark ? const Color(0xFFB0B0B0) : Colors.black54;
+    final dividerColor = isDark ? Colors.white24 : Colors.black45;
+
     return Scaffold(
-      backgroundColor: _light,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : Column(
           children: [
-            // 상단 헤더 (ListView 밖으로 이동)
+            // 상단 헤더
             Container(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
               decoration: const BoxDecoration(
@@ -93,98 +98,85 @@ class _NotificationScreenState extends State<NotificationScreen> {
             // 알림 목록
             Expanded(
               child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            // 새로운 알림
-            const Row(
-              children: [
-                Icon(Icons.notifications_active_outlined,
-                    color: _ink),
-                SizedBox(width: 6),
-                Text(
-                  '새로운 알림',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: _ink,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                children: [
+                  // 새로운 알림
+                  Row(
+                    children: [
+                      Icon(Icons.notifications_active_outlined,
+                          color: textColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        '새로운 알림',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  Divider(height: 24, color: dividerColor),
+
+                  if (_newAlerts.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text('새로운 알림이 없습니다.',
+                          style: TextStyle(color: subTextColor)),
+                    )
+                  else
+                    ..._newAlerts.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          e,
+                          style: TextStyle(color: textColor, fontSize: 15),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+                  Divider(height: 32, color: dividerColor),
+
+                  // 이전 알림
+                  Row(
+                    children: [
+                      Icon(Icons.notifications_none_rounded,
+                          color: textColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        '이전 알림',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(height: 24, color: dividerColor),
+
+                  if (_oldAlerts.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text('이전 알림이 없습니다.',
+                          style: TextStyle(color: subTextColor)),
+                    )
+                  else
+                    ..._oldAlerts.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          e,
+                          style: TextStyle(color: subTextColor),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            const Divider(
-                height: 24, color: Colors.black45),
-
-            if (_newAlerts.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('새로운 알림이 없습니다.',
-                    style:
-                    TextStyle(color: Colors.black54)),
-              )
-            else
-              ..._newAlerts
-                  .map(
-                    (e) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 8.0),
-                  child: Text(
-                    e,
-                    style: const TextStyle(
-                        color: _ink, fontSize: 15),
-                  ),
-                ),
-              )
-                  .toList(),
-
-            const SizedBox(height: 24),
-            const Divider(
-                height: 32, color: Colors.black45),
-
-            // 이전 알림
-            const Row(
-              children: [
-                Icon(Icons.notifications_none_rounded,
-                    color: _ink),
-                SizedBox(width: 6),
-                Text(
-                  '이전 알림',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: _ink,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(
-                height: 24, color: Colors.black45),
-
-            if (_oldAlerts.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('이전 알림이 없습니다.',
-                    style:
-                    TextStyle(color: Colors.black54)),
-              )
-            else
-              ..._oldAlerts
-                  .map(
-                    (e) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 8.0),
-                  child: Text(
-                    e,
-                    style: const TextStyle(
-                        color: Colors.black54),
-                  ),
-                ),
-              )
-                  .toList(),
-              ],
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
