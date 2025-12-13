@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../data/api_service.dart';
 import '../core/widgets.dart';
 
@@ -19,11 +20,35 @@ class _FriendsScreenState extends State<FriendsScreen> {
   bool _loading = true;
   bool _adding = false;
   List<FriendSummary> _friends = [];
+  String? _myFriendCode;
 
   @override
   void initState() {
     super.initState();
     _loadFriends();
+    _loadMyFriendCode();
+  }
+
+  Future<void> _loadMyFriendCode() async {
+    try {
+      final profile = await ProfileService.getProfile();
+      if (mounted) {
+        setState(() {
+          _myFriendCode = profile['friend_code']?.toString();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading friend code: $e');
+    }
+  }
+
+  void _copyFriendCode() {
+    if (_myFriendCode != null) {
+      Clipboard.setData(ClipboardData(text: _myFriendCode!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('친구 코드가 복사되었습니다!')),
+      );
+    }
   }
 
   Future<void> _loadFriends() async {
@@ -139,6 +164,41 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
 
               const SizedBox(height: 20),
+
+              // 내 친구 코드 박스
+              if (_myFriendCode != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _blue, width: 2),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.badge_outlined, color: _blue),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('내 친구 코드', style: TextStyle(color: _ink, fontSize: 12)),
+                            Text(
+                              _myFriendCode!,
+                              style: const TextStyle(color: _ink, fontWeight: FontWeight.w800, fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _copyFriendCode,
+                        icon: const Icon(Icons.copy, color: _blue),
+                        tooltip: '복사',
+                      ),
+                    ],
+                  ),
+                ),
 
               // 친구 추가 박스
               Container(

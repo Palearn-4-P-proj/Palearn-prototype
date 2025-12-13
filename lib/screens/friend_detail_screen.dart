@@ -21,6 +21,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
 
   bool _loading = true;
   bool _initialized = false;
+  bool _cheerSending = false; // 응원 버튼 디바운싱용
   DateTime _focused = DateTime.now();
   DateTime _selected = DateTime.now();
 
@@ -69,6 +70,11 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   }
 
   Future<void> _sendCheer() async {
+    // 디바운싱: 이미 전송 중이면 무시
+    if (_cheerSending) return;
+
+    setState(() => _cheerSending = true);
+
     try {
       await FriendsService.checkFriendPlan(
         friendId: _args.friendId,
@@ -82,6 +88,12 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       debugPrint('Error sending cheer: $e');
       if (mounted) {
         showErrorToast(context, '응원 전송에 실패했습니다');
+      }
+    } finally {
+      // 2초 후 다시 버튼 활성화 (연속 클릭 방지)
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() => _cheerSending = false);
       }
     }
   }
@@ -127,14 +139,22 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                         ),
                       ),
                       const Spacer(),
-                      // 응원 버튼
+                      // 응원 버튼 (디바운싱 적용)
                       ElevatedButton.icon(
-                        onPressed: _sendCheer,
-                        icon: const Icon(Icons.favorite, size: 18),
-                        label: const Text('응원하기'),
+                        onPressed: _cheerSending ? null : _sendCheer,
+                        icon: _cheerSending
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: _blue),
+                              )
+                            : const Icon(Icons.favorite, size: 18),
+                        label: Text(_cheerSending ? '전송중...' : '응원하기'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: _blue,
+                          disabledBackgroundColor: Colors.white70,
+                          disabledForegroundColor: _blue.withAlpha(150),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           shape: RoundedRectangleBorder(

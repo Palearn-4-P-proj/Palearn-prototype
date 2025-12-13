@@ -71,19 +71,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadHeader() async {
     try {
+      // 먼저 로컬에 저장된 이름 가져오기 (백업용)
+      final savedName = await SecureTokenStorage.getUserName();
+
       final data = await HomeService.getHeader();
       if (mounted) {
+        // API 응답의 이름이 비어있으면 로컬 저장된 이름 사용
+        final apiName = data['name']?.toString() ?? '';
         setState(() {
-          displayName = data['name'] ?? 'User';
+          displayName = apiName.isNotEmpty ? apiName : (savedName ?? 'User');
           todayProgress = (data['todayProgress'] ?? 0) / 100.0;
           loadingHeader = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading header: $e');
+      // 에러 시에도 로컬 저장된 이름 시도
+      final savedName = await SecureTokenStorage.getUserName();
       if (mounted) {
         setState(() {
-          displayName = 'User';
+          displayName = savedName ?? 'User';
           todayProgress = 0.0;
           loadingHeader = false;
         });
@@ -770,12 +777,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const Spacer(),
-              TextButton.icon(
+              ElevatedButton.icon(
                 onPressed: () => Navigator.pushNamed(context, '/create_plan'),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('새 계획'),
-                style: TextButton.styleFrom(
-                  foregroundColor: _blue,
+                label: const Text('새 계획', style: TextStyle(fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
             ],
@@ -824,17 +836,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(color: subTextColor),
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
+                  ElevatedButton.icon(
                     onPressed: () =>
                         Navigator.pushNamed(context, '/create_plan'),
+                    icon: const Icon(Icons.add_circle_outline, size: 20),
+                    label: const Text(
+                      '첫 계획 만들기',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _blue,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      elevation: 4,
+                      shadowColor: _blue.withAlpha(100),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text('첫 계획 만들기'),
                   ),
                 ],
               ),
@@ -1030,9 +1055,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 rowHeight: 52,
                 daysOfWeekHeight: 28,
                 availableGestures: AvailableGestures.horizontalSwipe,
+                // 스와이프로 월 변경 시 제목 동기화
+                onPageChanged: (focusedDay) {
+                  setState(() {
+                    _focusedMonth = focusedDay;
+                  });
+                },
                 calendarStyle: CalendarStyle(
                   todayDecoration:
                       const BoxDecoration(color: _blue, shape: BoxShape.circle),
+                  todayTextStyle: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                   defaultTextStyle: TextStyle(fontSize: 14, color: textColor),
                   weekendTextStyle:
                       const TextStyle(fontSize: 14, color: Colors.redAccent),

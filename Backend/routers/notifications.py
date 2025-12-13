@@ -18,21 +18,18 @@ async def get_notifications(current_user: Dict = Depends(get_current_user)):
     log_navigation(current_user['name'], "알림 화면")
 
     user_id = current_user['user_id']
-    notifications = store.notifications.get(user_id, {'new': [], 'old': []})
+    notifications = store.get_notifications(user_id)
 
     return {
-        "new_alerts": notifications['new'],
-        "old_alerts": notifications['old']
+        "new_alerts": notifications.get('new', []),
+        "old_alerts": notifications.get('old', [])
     }
 
 
 @router.post("/read")
 async def mark_notifications_read(current_user: Dict = Depends(get_current_user)):
     user_id = current_user['user_id']
-    notifications = store.notifications.get(user_id, {'new': [], 'old': []})
-
-    notifications['old'] = notifications['new'] + notifications['old']
-    notifications['new'] = []
+    store.mark_notifications_read(user_id)
 
     log_success("알림 읽음 처리 완료")
     return {"success": True}

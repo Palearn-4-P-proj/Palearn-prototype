@@ -110,53 +110,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(top: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
                 ),
-                child: Column(
-                  children: [
-                    CircleAvatar(radius: 48, backgroundImage: NetworkImage(photoUrl)),
-                    const SizedBox(height: 12),
-                    Text(name,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 4),
-                    Text('ID: $userId',
-                        style: const TextStyle(color: Colors.black54)),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: Column(
+                    children: [
+                      CircleAvatar(radius: 48, backgroundImage: NetworkImage(photoUrl)),
+                      const SizedBox(height: 12),
+                      Text(name,
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 4),
+                      Text('ID: $userId',
+                          style: const TextStyle(color: Colors.black54)),
 
-                    const SizedBox(height: 28),
+                      const SizedBox(height: 28),
 
-                    _menuTile(
-                      icon: Icons.person_outline_rounded,
-                      label: '프로필 수정',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/profile_edit', arguments: {
-                          'name': name,
-                          'userId': userId,
-                          'photoUrl': photoUrl,
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _menuTile(
-                      icon: Icons.settings_outlined,
-                      label: '설정',
-                      onTap: () {
-                        Navigator.pushNamed(context, '/settings');
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDarkModeToggle(),
-                    const SizedBox(height: 12),
-                    _menuTile(
-                      icon: Icons.logout_rounded,
-                      label: 'Logout',
-                      onTap: _logout,
-                      danger: true,
-                    ),
-                  ],
+                      _menuTile(
+                        icon: Icons.person_outline_rounded,
+                        label: '프로필 수정',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/profile_edit', arguments: {
+                            'name': name,
+                            'userId': userId,
+                            'photoUrl': photoUrl,
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _menuTile(
+                        icon: Icons.settings_outlined,
+                        label: '설정',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/settings');
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDarkModeToggle(),
+                      const SizedBox(height: 12),
+                      _menuTile(
+                        icon: Icons.logout_rounded,
+                        label: '로그아웃',
+                        onTap: _logout,
+                        danger: true,
+                      ),
+                      const SizedBox(height: 40), // 하단 여백 추가
+                    ],
+                  ),
                 ),
               ),
             ),

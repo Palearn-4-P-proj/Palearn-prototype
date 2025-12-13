@@ -59,6 +59,11 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
     if (picked != null) setState(() => startDate = picked);
   }
 
+  String _getWeekdayName(int weekday) {
+    const names = ['월', '화', '수', '목', '금', '토', '일'];
+    return '${names[weekday - 1]}요일';
+  }
+
   void _goNext() {
     if (selectedSkill == null ||
         selectedHour == null ||
@@ -157,6 +162,14 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4),
+                    child: Text(
+                      '💡 선택한 시간에 맞춰 하루 학습량이 자동 조절됩니다.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
                   const SizedBox(height: 18),
 
                   _Labeled('시작 날짜'),
@@ -170,7 +183,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                             Text(
                               startDate == null
                                   ? '날짜를 선택하세요'
-                                  : '${startDate!.year}년 ${startDate!.month}월 ${startDate!.day}일',
+                                  : '${startDate!.year}년 ${startDate!.month}월 ${startDate!.day}일 (${_getWeekdayName(startDate!.weekday)})',
                             ),
                             const Spacer(),
                             const Icon(Icons.calendar_month_rounded),

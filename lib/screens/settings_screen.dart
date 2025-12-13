@@ -11,8 +11,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
-  bool _autoPlayVideos = false;
-  String _selectedLanguage = '한국어';
 
   @override
   Widget build(BuildContext context) {
@@ -88,31 +86,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
 
-                  // 자동 재생
-                  _buildSettingTile(
-                    icon: Icons.play_circle_outline,
-                    title: '동영상 자동 재생',
-                    trailing: Switch(
-                      value: _autoPlayVideos,
-                      onChanged: (val) => setState(() => _autoPlayVideos = val),
-                      activeTrackColor: const Color(0xFF7DB2FF),
-                      activeThumbColor: Colors.white,
-                    ),
-                  ),
-
                   const SizedBox(height: 24),
 
                   // 일반 섹션
                   _buildSectionTitle('일반'),
                   const SizedBox(height: 12),
-
-                  // 언어 설정
-                  _buildSettingTile(
-                    icon: Icons.language,
-                    title: '언어',
-                    subtitle: _selectedLanguage,
-                    onTap: _showLanguageDialog,
-                  ),
 
                   // 캐시 삭제
                   _buildSettingTile(
@@ -242,37 +220,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right, color: Colors.grey) : null),
         onTap: onTap,
       ),
-    );
-  }
-
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('언어 선택'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildLanguageOption('한국어'),
-            _buildLanguageOption('English'),
-            _buildLanguageOption('日本語'),
-            _buildLanguageOption('中文'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageOption(String language) {
-    final isSelected = _selectedLanguage == language;
-    return ListTile(
-      title: Text(language),
-      trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF7DB2FF)) : null,
-      onTap: () {
-        setState(() => _selectedLanguage = language);
-        Navigator.pop(context);
-      },
     );
   }
 

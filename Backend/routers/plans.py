@@ -223,6 +223,10 @@ async def generate_plan(request: PlanGenerateRequest, current_user: Dict = Depen
 
     user_id = current_user['user_id']
 
+    # 쉬는 요일 처리 - 프론트에서 '월', '화' 형식으로 오므로 그대로 사용
+    rest_days_str = ', '.join(request.restDays) if request.restDays else '없음'
+    rest_days_list = request.restDays if request.restDays else []
+
     prompt = f"""
 학습 계획을 만들어주세요.
 
@@ -230,8 +234,11 @@ async def generate_plan(request: PlanGenerateRequest, current_user: Dict = Depen
 - 스킬: {request.skill}
 - 하루 공부 시간: {request.hourPerDay}시간
 - 시작 날짜: {request.startDate}
-- 쉬는 요일: {', '.join(request.restDays) if request.restDays else '없음'}
+- 쉬는 요일: {rest_days_str} (이 요일에는 절대 학습 일정을 넣지 마세요!)
 - 학습자 수준: {request.selfLevel}
+
+⚠️ 중요: 쉬는 요일({rest_days_str})에는 절대로 학습 일정을 배정하지 마세요!
+예를 들어 쉬는 요일이 '월, 수, 금'이면 화, 목, 토, 일에만 학습 일정을 넣어야 합니다.
 
 반드시 아래 JSON 형식으로만 응답해주세요:
 ```json
@@ -255,14 +262,26 @@ async def generate_plan(request: PlanGenerateRequest, current_user: Dict = Depen
 }}
 ```
 
-{request.startDate}부터 4주간의 일정을 만들되, 쉬는 요일({', '.join(request.restDays)})은 제외해주세요.
-하루에 2-3개의 구체적인 학습 태스크를 배정해주세요.
+{request.startDate}부터 4주간의 일정을 만들되, 쉬는 요일({rest_days_str})은 반드시 제외해주세요.
+하루에 {int(request.hourPerDay)}시간에 맞춰 2-3개의 구체적인 학습 태스크를 배정해주세요.
 """
 
     response = call_gpt(prompt, use_search=False)
     data = extract_json(response)
 
     if data and 'daily_schedule' in data:
+        # GPT 응답에서 쉬는 요일 필터링 (한번 더 확인)
+        day_names = ['월', '화', '수', '목', '금', '토', '일']
+        filtered_schedule = []
+        for day in data['daily_schedule']:
+            try:
+                day_date = datetime.strptime(day['date'], '%Y-%m-%d').date()
+                day_name = day_names[day_date.weekday()]
+                if day_name not in rest_days_list:
+                    filtered_schedule.append(day)
+            except:
+                filtered_schedule.append(day)  # 날짜 파싱 실패시 일단 포함
+        data['daily_schedule'] = filtered_schedule
         log_info("학습 자료 검색 시작...")
         for day in data['daily_schedule']:
             for task in day['tasks']:

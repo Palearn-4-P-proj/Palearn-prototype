@@ -28,6 +28,9 @@ class _LoginWidgetState extends State<LoginWidget> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -36,16 +39,36 @@ class _LoginWidgetState extends State<LoginWidget> {
     super.dispose();
   }
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
+  }
+
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이메일과 비밀번호를 입력하세요')),
-      );
-      return;
+    // 인라인 에러 메시지 검증
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
+
+    bool hasError = false;
+
+    if (email.isEmpty) {
+      setState(() => _emailError = '이메일을 입력하세요');
+      hasError = true;
+    } else if (!_isValidEmail(email)) {
+      setState(() => _emailError = '올바른 이메일 형식이 아닙니다');
+      hasError = true;
     }
+
+    if (password.isEmpty) {
+      setState(() => _passwordError = '비밀번호를 입력하세요');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     setState(() => _isLoading = true);
 
@@ -56,9 +79,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('로그인 실패: $e')),
-        );
+        setState(() => _passwordError = '이메일 또는 비밀번호가 올바르지 않습니다');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -106,7 +127,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                   children: [
                     const Center(
                       child: Text(
-                        'Welcome',
+                        '로그인',
                         style: TextStyle(
                           color: _ink,
                           fontSize: 30,
@@ -116,52 +137,64 @@ class _LoginWidgetState extends State<LoginWidget> {
                     ),
                     const SizedBox(height: 28),
 
-                    const Text('아이디',
+                    const Text('이메일',
                         style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: 'example@example.com',
                       controller: _emailController,
+                      onChanged: (_) => setState(() => _emailError = null),
                     ),
+                    if (_emailError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_emailError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
 
                     const SizedBox(height: 20),
                     const Text('비밀번호',
                         style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
-                      hint: '••••••••',
-                      obscure: true,
+                      hint: '비밀번호 입력',
+                      obscure: _obscurePassword,
                       controller: _passwordController,
-                      trailing: Icon(Icons.visibility_off, size: 20, color: _ink.withOpacity(.7)),
+                      onChanged: (_) => setState(() => _passwordError = null),
+                      trailing: GestureDetector(
+                        onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                        child: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                          color: _ink.withOpacity(.7),
+                        ),
+                      ),
                     ),
+                    if (_passwordError != null) ...[
+                      const SizedBox(height: 4),
+                      Text(_passwordError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    ],
 
                     const SizedBox(height: 24),
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : _PrimaryButton(text: 'Log In', onTap: _handleLogin),
+                        : _PrimaryButton(text: '로그인', onTap: _handleLogin),
 
-                    const SizedBox(height: 16),
-                    _SecondaryButton(
-                      text: 'Sign Up',
-                      onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
-                    ),
                     const SizedBox(height: 16),
 
                     const Spacer(),
 
                     GestureDetector(
-                      onTap: widget.onTapSignUpText,
+                      onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
                       child: const Center(
                         child: Text.rich(
                           TextSpan(
-                            text: "Don't have an account? ",
+                            text: "계정이 없으신가요? ",
                             style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w300),
                             children: [
                               TextSpan(
-                                text: 'Sign Up',
+                                text: '회원가입',
                                 style: TextStyle(
                                   color: Color(0xFF6CB5FD),
-                                  fontWeight: FontWeight.w300,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -316,7 +349,7 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                   children: [
                     const Center(
                       child: Text(
-                        'Create Account',
+                        '회원가입',
                         style: TextStyle(
                           color: _ink,
                           fontSize: 30,
@@ -359,7 +392,7 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     const SizedBox(height: 24),
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : _PrimaryButton(text: 'Sign Up', onTap: _handleSignUp),
+                        : _PrimaryButton(text: '회원가입', onTap: _handleSignUp),
 
                     const Spacer(),
                     GestureDetector(
@@ -367,14 +400,14 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                       child: const Center(
                         child: Text.rich(
                           TextSpan(
-                            text: 'Already have an account?  ',
+                            text: '이미 계정이 있으신가요? ',
                             style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w300),
                             children: [
                               TextSpan(
-                                text: 'Log In',
+                                text: '로그인',
                                 style: TextStyle(
                                   color: Color(0xFF6CB5FD),
-                                  fontWeight: FontWeight.w300,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -478,33 +511,6 @@ class _PrimaryButton extends StatelessWidget {
   }
 }
 
-class _SecondaryButton extends StatelessWidget {
-  const _SecondaryButton({required this.text, required this.onTap});
-  final String text;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 46,
-      child: FilledButton(
-        onPressed: onTap,
-        style: FilledButton.styleFrom(
-          backgroundColor: _blueLight,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Color(0xFF0E3E3E),
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// 상단 하늘색 영역의 '아래쪽 아치'를 만드는 클리퍼
 class _BottomArcClipper extends CustomClipper<Path> {

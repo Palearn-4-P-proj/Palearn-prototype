@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-// 📌 서버 통신 시 http, dio 등이 필요함
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
+import '../data/api_service.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -29,51 +27,51 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   @override
   void initState() {
     super.initState();
-    emailCtrl = TextEditingController(text: 'example@example.com');
-    nameCtrl = TextEditingController(text: 'John Smith');
+    emailCtrl = TextEditingController();
+    nameCtrl = TextEditingController();
     birthCtrl = TextEditingController();
     pwCtrl = TextEditingController();
     pw2Ctrl = TextEditingController();
-    photoUrlCtrl = TextEditingController(text: photoUrl);
+    photoUrlCtrl = TextEditingController();
 
-    // =========================================================================
-    // 🟦 [중요] 프로필 초기 데이터 불러오기 — FastAPI GET 필요
-    //
-    // GET /profile/{user_id}
-    //
-    // 응답 예)
-    // {
-    //   "name": "한은진",
-    //   "email": "abc@gmail.com",
-    //   "birth": "2004-06-24",
-    //   "photo_url": "...",
-    // }
-    //
-    // Flutter 예)
-    // final res = await http.get(Uri.parse('$BASE/profile/$userId'));
-    // final data = json.decode(res.body);
-    // setState(() {
-    //   nameCtrl.text = data["name"];
-    //   emailCtrl.text = data["email"];
-    //   birthCtrl.text = data["birth"];
-    //   photoUrl = data["photo_url"];
-    // });
-    //
-    // =========================================================================
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final a = ModalRoute.of(context)?.settings.arguments as Map?;
-      if (a != null) {
+    // API에서 프로필 정보 불러오기
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final data = await ProfileService.getProfile();
+      if (mounted) {
         setState(() {
-          nameCtrl.text = a['name']?.toString() ?? nameCtrl.text;
-          userId = a['userId']?.toString() ?? userId;
-          final p = a['photoUrl']?.toString();
-          if (p != null) {
+          nameCtrl.text = data['name']?.toString() ?? '';
+          emailCtrl.text = data['email']?.toString() ?? '';
+          birthCtrl.text = data['birth']?.toString() ?? '';
+          userId = data['user_id']?.toString() ?? userId;
+          final p = data['photo_url']?.toString();
+          if (p != null && p.isNotEmpty) {
             photoUrl = p;
             photoUrlCtrl.text = p;
           }
         });
       }
-    });
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      // arguments에서 백업 데이터 사용
+      if (mounted) {
+        final a = ModalRoute.of(context)?.settings.arguments as Map?;
+        if (a != null) {
+          setState(() {
+            nameCtrl.text = a['name']?.toString() ?? '';
+            userId = a['userId']?.toString() ?? userId;
+            final p = a['photoUrl']?.toString();
+            if (p != null) {
+              photoUrl = p;
+              photoUrlCtrl.text = p;
+            }
+          });
+        }
+      }
+    }
   }
 
   @override
@@ -87,40 +85,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     super.dispose();
   }
 
-  // ===========================================================================
-  // 🟦 [중요] 프로필 업데이트 — FastAPI POST 또는 PUT 필요
-  //
-  // POST /profile/update
-  //
-  // body 예)
-  // {
-  //   "user_id": "25030024",
-  //   "email": "...",
-  //   "name": "...",
-  //   "birth": "...",
-  //   "password": "1234",
-  // }
-  //
-  // Flutter 예)
-  // final res = await http.post(
-  //   Uri.parse('$BASE/profile/update'),
-  //   headers: {"Content-Type": "application/json"},
-  //   body: json.encode({
-  //     "user_id": userId,
-  //     "email": emailCtrl.text,
-  //     "name": nameCtrl.text,
-  //     "birth": birthCtrl.text,
-  //     "password": pwCtrl.text,
-  //   }),
-  // );
-  //
-  // 성공하면:
-  // Navigator.pop(context);  // 프로필 화면으로 복귀
-  // ===========================================================================
   Future<void> _updateProfile() async {
-    // TODO: 실제 서버 POST 연결 필요
+    // 비밀번호 확인 검증
+    if (pwCtrl.text.isNotEmpty && pwCtrl.text != pw2Ctrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
+      );
+      return;
+    }
 
-    // 현재는 데모용 알림
+    // TODO: 실제 서버 POST 연결 필요
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('프로필이 업데이트되었습니다.')),
@@ -225,9 +199,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
-                  const Text('Edit My Profile',
+                  const Text('프로필 수정',
                       style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w700)),
+                          fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   Opacity(
                     opacity: 0,
@@ -350,7 +324,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           padding:
                           const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: const Text('Update Profile'),
+                        child: const Text('프로필 업데이트', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
