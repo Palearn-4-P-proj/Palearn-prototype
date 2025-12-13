@@ -116,18 +116,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildSettingTile(
                     icon: Icons.description_outlined,
                     title: '이용약관',
-                    onTap: () {
-                      // TODO: 이용약관 페이지로 이동
-                    },
+                    onTap: () => Navigator.pushNamed(context, '/terms'),
                   ),
 
                   // 개인정보 처리방침
                   _buildSettingTile(
                     icon: Icons.privacy_tip_outlined,
                     title: '개인정보 처리방침',
-                    onTap: () {
-                      // TODO: 개인정보 처리방침 페이지로 이동
-                    },
+                    onTap: () => Navigator.pushNamed(context, '/privacy'),
                   ),
 
                   const SizedBox(height: 24),
@@ -140,7 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildSettingTile(
                     icon: Icons.logout,
                     title: '로그아웃',
-                    titleColor: Colors.orange,
+                    titleColor: Colors.red,
                     onTap: _logout,
                   ),
 
@@ -246,7 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
+              backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
             child: const Text('로그아웃'),

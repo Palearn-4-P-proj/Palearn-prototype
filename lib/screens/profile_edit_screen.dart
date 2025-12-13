@@ -85,6 +85,43 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     super.dispose();
   }
 
+  Future<void> _selectBirthDate() async {
+    // 현재 birthCtrl에서 날짜 파싱 시도
+    DateTime initialDate = DateTime(2000, 1, 1);
+    if (birthCtrl.text.isNotEmpty) {
+      try {
+        initialDate = DateTime.parse(birthCtrl.text);
+      } catch (_) {}
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      locale: const Locale('ko', 'KR'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF7DB2FF),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        birthCtrl.text = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
   Future<void> _updateProfile() async {
     // 비밀번호 확인 검증
     if (pwCtrl.text.isNotEmpty && pwCtrl.text != pw2Ctrl.text) {
@@ -270,9 +307,19 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     ),
                     _field(
                       label: '생일',
-                      child: TextField(
-                        controller: birthCtrl,
-                        decoration: _decoration('DD / MM / YYYY'),
+                      child: GestureDetector(
+                        onTap: () => _selectBirthDate(),
+                        child: AbsorbPointer(
+                          child: TextField(
+                            controller: birthCtrl,
+                            decoration: _decoration('생일을 선택하세요').copyWith(
+                              suffixIcon: const Icon(
+                                Icons.calendar_today,
+                                color: Color(0xFF7DB2FF),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     _field(

@@ -159,6 +159,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                       obscure: _obscurePassword,
                       controller: _passwordController,
                       onChanged: (_) => setState(() => _passwordError = null),
+                      onSubmitted: (_) => _handleLogin(),
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                         child: Icon(
@@ -436,12 +437,14 @@ class _RoundedField extends StatelessWidget {
     this.trailing,
     this.controller,
     this.onChanged,
+    this.onSubmitted,
   });
   final String? hint;
   final bool obscure;
   final Widget? trailing;
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -459,12 +462,14 @@ class _RoundedField extends StatelessWidget {
               controller: controller,
               obscureText: obscure,
               onChanged: onChanged,
+              onSubmitted: onSubmitted,
+              textInputAction: onSubmitted != null ? TextInputAction.done : TextInputAction.next,
               decoration: InputDecoration(
                 hintText: hint,
                 border: InputBorder.none,
                 isCollapsed: true,
                 hintStyle: TextStyle(
-                  color: _ink.withOpacity(.45),
+                  color: _ink.withAlpha(115),
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),

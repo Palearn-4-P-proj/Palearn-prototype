@@ -58,17 +58,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? const Color(0xFFE5E5E5) : Colors.black;
+    final subTextColor = isDark ? const Color(0xFFB0B0B0) : Colors.black54;
+    final menuBgColor = isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE0ECFF);
+
     if (loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: bgColor,
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       bottomNavigationBar: const CommonBottomNav(currentItem: NavItem.profile),
       body: SafeArea(
         child: Column(
           children: [
-            // ─────────── 🔥 뒤로가기 버튼 포함 헤더 ───────────
+            // ─────────── 뒤로가기 버튼 포함 헤더 ───────────
             Container(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               width: double.infinity,
@@ -88,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const Text(
                     'Profile',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
                   ),
 
                   const Spacer(),
@@ -110,9 +120,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(top: 12),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
                 ),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -121,11 +131,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       CircleAvatar(radius: 48, backgroundImage: NetworkImage(photoUrl)),
                       const SizedBox(height: 12),
                       Text(name,
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w800)),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w800, color: textColor)),
                       const SizedBox(height: 4),
                       Text('ID: $userId',
-                          style: const TextStyle(color: Colors.black54)),
+                          style: TextStyle(color: subTextColor)),
 
                       const SizedBox(height: 28),
 
@@ -139,6 +149,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'photoUrl': photoUrl,
                           });
                         },
+                        bgColor: menuBgColor,
+                        textColor: textColor,
                       ),
                       const SizedBox(height: 12),
                       _menuTile(
@@ -147,15 +159,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () {
                           Navigator.pushNamed(context, '/settings');
                         },
+                        bgColor: menuBgColor,
+                        textColor: textColor,
                       ),
                       const SizedBox(height: 12),
-                      _buildDarkModeToggle(),
+                      _buildDarkModeToggle(menuBgColor, textColor),
                       const SizedBox(height: 12),
                       _menuTile(
                         icon: Icons.logout_rounded,
                         label: '로그아웃',
                         onTap: _logout,
                         danger: true,
+                        bgColor: menuBgColor,
+                        textColor: textColor,
                       ),
                       const SizedBox(height: 40), // 하단 여백 추가
                     ],
@@ -169,14 +185,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDarkModeToggle() {
+  Widget _buildDarkModeToggle(Color bgColor, Color textColor) {
     final themeProvider = ThemeProvider.of(context);
     final isDarkMode = themeProvider?.themeMode == ThemeMode.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0ECFF),
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -194,11 +210,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
+          Text(
             '다크 모드',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              color: textColor,
             ),
           ),
           const Spacer(),
@@ -218,13 +235,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String label,
     required VoidCallback onTap,
     bool danger = false,
+    Color bgColor = const Color(0xFFE0ECFF),
+    Color textColor = Colors.black,
   }) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFE0ECFF),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -243,10 +262,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: danger ? const Color(0xFFE53935) : Colors.black,
+                  color: danger ? const Color(0xFFE53935) : textColor,
                 )),
             const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+            Icon(Icons.chevron_right_rounded, color: textColor.withAlpha(100)),
           ],
         ),
       ),

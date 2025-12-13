@@ -478,7 +478,7 @@ class CommonBottomNav extends StatelessWidget {
               tooltip: '홈',
             ),
             _NavButton(
-              icon: Icons.compare_arrows_rounded,
+              icon: Icons.people_rounded,
               isSelected: currentItem == NavItem.friends,
               onTap: () => _handleTap(context, NavItem.friends),
               tooltip: '친구',

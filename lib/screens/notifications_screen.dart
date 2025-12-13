@@ -58,13 +58,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : ListView(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+            : Column(
           children: [
-            // 상단 헤더
+            // 상단 헤더 (ListView 밖으로 이동)
             Container(
-              padding:
-              const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
               decoration: const BoxDecoration(
                 color: _blue,
                 borderRadius: BorderRadius.vertical(
@@ -92,7 +90,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            // 알림 목록
+            Expanded(
+              child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
 
             // 새로운 알림
             const Row(
@@ -179,8 +181,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ),
               )
                   .toList(),
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }

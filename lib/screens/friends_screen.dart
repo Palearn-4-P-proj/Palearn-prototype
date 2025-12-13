@@ -121,8 +121,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? const Color(0xFFE5E5E5) : _ink;
+    final blueLightColor = isDark ? const Color(0xFF1E3A5F) : _blueLight;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       bottomNavigationBar: const CommonBottomNav(currentItem: NavItem.friends),
       body: SafeArea(
         child: RefreshIndicator(
@@ -171,7 +177,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: _blue, width: 2),
                   ),
@@ -183,10 +189,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('내 친구 코드', style: TextStyle(color: _ink, fontSize: 12)),
+                            Text('내 친구 코드', style: TextStyle(color: textColor, fontSize: 12)),
                             Text(
                               _myFriendCode!,
-                              style: const TextStyle(color: _ink, fontWeight: FontWeight.w800, fontSize: 18),
+                              style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 18),
                             ),
                           ],
                         ),
@@ -204,13 +210,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _blueLight,
+                  color: blueLightColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('친구 추가', style: TextStyle(color: _ink, fontWeight: FontWeight.w700)),
+                    Text('친구 추가', style: TextStyle(color: textColor, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -220,7 +226,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             decoration: InputDecoration(
                               hintText: '친구 코드 입력',
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: cardColor,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),

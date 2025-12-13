@@ -24,13 +24,45 @@ class LoadingPlanScreen extends StatefulWidget {
   State<LoadingPlanScreen> createState() => _LoadingPlanScreenState();
 }
 
-class _LoadingPlanScreenState extends State<LoadingPlanScreen> {
+class _LoadingPlanScreenState extends State<LoadingPlanScreen>
+    with SingleTickerProviderStateMixin {
   double progress = 0.0;
   Timer? _timer;
+  Timer? _tipTimer;
+  int _currentTipIndex = 0;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  // 로딩 중 표시할 팁 메시지
+  final List<String> _tips = [
+    '💡 Palearn은 AI가 맞춤형 학습 계획을 생성합니다',
+    '📚 하루 학습량은 설정한 시간에 맞춰 자동 조절됩니다',
+    '🎯 쉬는 요일에는 학습 일정이 배정되지 않아요',
+    '📊 학습 통계로 진행 상황을 한눈에 확인하세요',
+    '👥 친구와 함께 학습하면 동기부여가 됩니다',
+    '🔔 알림으로 학습 일정을 놓치지 마세요',
+  ];
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // 3초마다 팁 변경
+    _tipTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTipIndex = (_currentTipIndex + 1) % _tips.length;
+        });
+      }
+    });
+
     _goToQuiz();
   }
 
@@ -69,6 +101,8 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _tipTimer?.cancel();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -95,8 +129,8 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen> {
                   ),
                 ],
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.menu_book_rounded, color: _ink, size: 18),
                   SizedBox(width: 6),
                   Text(
@@ -108,6 +142,26 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen> {
             ),
 
             const Spacer(),
+
+            // 애니메이션 아이콘
+            ScaleTransition(
+              scale: _pulseAnimation,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: _blue.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  size: 50,
+                  color: _blue,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
 
             // 진행바
             Padding(
@@ -123,10 +177,45 @@ class _LoadingPlanScreenState extends State<LoadingPlanScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text('$percent%', style: const TextStyle(fontSize: 16, color: _ink)),
+            Text('$percent%', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _ink)),
             const SizedBox(height: 18),
-            const Text('AI가 열심히 작업 중입니다 …',
-                style: TextStyle(fontSize: 16, color: _ink)),
+            Text(
+              'AI가 ${widget.skill} 학습 계획을 준비하고 있습니다...',
+              style: const TextStyle(fontSize: 16, color: _ink),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 40),
+
+            // 팁 메시지 (페이드 애니메이션)
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: Container(
+                key: ValueKey<int>(_currentTipIndex),
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  _tips[_currentTipIndex],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: _ink,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
 
             const Spacer(),
           ],

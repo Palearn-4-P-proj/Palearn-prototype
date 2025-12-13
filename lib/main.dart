@@ -49,6 +49,10 @@ import 'screens/search_screen.dart';
 // ── 설정 화면 ────────────────────────────────────────────────
 import 'screens/settings_screen.dart';
 
+// ── 약관 화면 ────────────────────────────────────────────────
+import 'screens/terms_screen.dart';
+import 'screens/privacy_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -190,6 +194,10 @@ class _AppRootState extends State<AppRoot> {
 
           // ── 설정 화면 ──
           '/settings': (_) => const SettingsScreen(),
+
+          // ── 약관 화면 ──
+          '/terms': (_) => const TermsScreen(),
+          '/privacy': (_) => const PrivacyScreen(),
         },
       ),
     );

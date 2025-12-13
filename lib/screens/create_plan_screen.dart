@@ -19,8 +19,8 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   ];
   String? selectedSkill;
 
-  // 2) 하루 공부 시간
-  final hours = const ['30분', '1시간', '2시간', '3시간'];
+  // 2) 하루 공부 시간 (30분 단위)
+  final hours = const ['30분', '1시간', '1시간 30분', '2시간', '2시간 30분', '3시간', '3시간 30분', '4시간'];
   String? selectedHour;
 
   // 3) 시작 날짜
