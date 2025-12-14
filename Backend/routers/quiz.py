@@ -25,41 +25,61 @@ async def get_quiz_items(
     log_navigation(current_user['name'], "퀴즈 화면")
 
     # 강화된 프롬프트 - O/X 퀴즈 + explanation
-    prompt = f"""[시스템 지시]
-당신은 '{skill}' 분야의 개념 이해도를 점검하는 OX 퀴즈 출제기입니다.
-오직 JSON만 출력하세요. (마크다운/코드블록/설명 금지)
+    prompt = f"""[SYSTEM ROLE]
+You are a quiz generator specialized in "{skill}". Generate O/X (True/False) quizzes for {level} learners.
 
-🚨🚨🚨 **언어 규칙 - 매우 중요** 🚨🚨🚨
-- question과 explanation은 반드시 **한국어**로만 작성하세요.
-- 영어로 작성하면 안 됩니다. 무조건 한국어입니다.
-- 기술 용어(예: Python, API, React 등)는 그대로 사용 가능하지만, 문장은 한국어로 작성하세요.
+[STRICT OUTPUT REQUIREMENTS]
+- Output ONLY valid JSON. No markdown, no code blocks, no explanations before/after.
+- All "question" and "explanation" fields MUST be written in Korean.
+- Technical terms (Python, API, React, etc.) may remain in English, but sentences must be Korean.
 
-[목표]
-- {level} 학습자용 '{skill}' OX 퀴즈 10개 생성
+[DOMAIN CONSTRAINT - CRITICAL]
+Topic scope: "{skill}" ONLY
 
-[핵심 규칙]
-1) 모든 문항은 '{skill}'의 핵심 개념/용어/상황을 반드시 포함해야 합니다.
-   - 각 question에 '{skill}' 관련 키워드(개념명/용어/기술/문제상황) 최소 1개 포함
-2) 일반상식/컴퓨터기초/역사/시사/언어상식 같은 "도메인 외 상식 문제"는 절대 금지.
-   - 금지 예: RAM/HTML/CPU/IP 같은 범용 IT 상식(단, '{skill}'에 직접적으로 필수인 경우만 허용)
-3) OX로 명확히 판별 가능해야 하며, 애매한 표현("대부분", "가끔", "상황에 따라") 금지
-4) explanation은 1~2문장으로 짧고 명확하게(속도 우선), 반드시 한국어로 작성
+REQUIRED: Every question MUST contain at least ONE of the following:
+- A core concept specific to "{skill}"
+- A technical term unique to "{skill}"
+- A common misconception within "{skill}"
+- A practical scenario involving "{skill}"
 
-[난이도]
-- {level} 수준에 맞춘 개념으로 구성
-- 너무 사소한 암기형보다 "헷갈리기 쉬운 개념/오해 포인트" 위주
+PROHIBITED question topics (auto-reject):
+- Generic computer science (RAM, CPU, IP, HTTP) unless directly essential to "{skill}"
+- General programming basics not specific to "{skill}"
+- History, current events, general knowledge
+- Cross-domain comparisons that don't test "{skill}" knowledge
 
-[반드시 따를 스키마]
+[QUESTION QUALITY CRITERIA]
+1. DETERMINISTIC: Must have exactly one correct answer (O or X), no ambiguity
+2. FORBIDDEN phrases: "대부분", "보통", "가끔", "상황에 따라", "일반적으로"
+3. FOCUSED: Test understanding, not memorization of trivia
+4. DIFFICULTY: Match {level} level
+   - 초급: Basic concepts, definitions, simple true/false facts
+   - 중급: Application of concepts, common pitfalls, edge cases
+   - 고급: Advanced patterns, performance implications, architectural decisions
+
+[ANSWER DISTRIBUTION]
+- Include mix of O (True) and X (False) answers
+- Aim for approximately 5 O and 5 X answers
+- Do not cluster same answers consecutively
+
+[OUTPUT SCHEMA - EXACT FORMAT]
 {{"quizzes":[
-  {{"id":1,"type":"OX","question":"한국어 질문...","options":[],"answerKey":"O","explanation":"한국어 설명..."}},
+  {{"id":1,"type":"OX","question":"한국어 질문문장","options":[],"answerKey":"O","explanation":"한국어 해설 1-2문장"}},
+  {{"id":2,"type":"OX","question":"한국어 질문문장","options":[],"answerKey":"X","explanation":"한국어 해설 1-2문장"}},
   ...
-  {{"id":10,"type":"OX","question":"한국어 질문...","options":[],"answerKey":"X","explanation":"한국어 설명..."}}
+  {{"id":10,"type":"OX","question":"한국어 질문문장","options":[],"answerKey":"O","explanation":"한국어 해설 1-2문장"}}
 ]}}
-- quizzes 길이 = 10, id=1..10, type="OX", options=[]
-- answerKey는 "O" 또는 "X"만
-- question과 explanation은 반드시 한국어
 
-오직 JSON만 출력하세요. question과 explanation은 반드시 한국어로 작성하세요."""
+SCHEMA RULES:
+- "quizzes" array length = exactly 10
+- "id" = sequential integers 1 through 10
+- "type" = always "OX"
+- "options" = always empty array []
+- "answerKey" = only "O" or "X"
+- "question" = Korean sentence ending with proper punctuation
+- "explanation" = Korean, 1-2 sentences, explains why answer is correct
+
+Generate quiz now. Output JSON only."""
 
     response = call_gpt(prompt, use_search=False)
     data = extract_json(response)

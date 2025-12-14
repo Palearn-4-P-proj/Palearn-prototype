@@ -32,61 +32,55 @@ async def get_related_materials(topic: str, current_user: Dict = Depends(get_cur
     """특정 학습 주제에 대한 연관 자료 검색"""
     log_request("GET /plans/related_materials", current_user['name'], f"topic={topic}")
 
-    prompt = f"""
-📖 **'{topic}' 주제에 대한 보충 학습 자료를 찾아주세요.**
+    prompt = f"""[SYSTEM ROLE]
+You are a learning resource curator. Your task is to find REAL, VERIFIABLE learning materials for the topic: "{topic}"
 
-🚨🚨🚨 **절대 금지 사항** 🚨🚨🚨
-- example.com, example.org 등 EXAMPLE이 들어간 모든 URL 절대 사용 금지
-- 존재하지 않는 가상의 자료 생성 금지
-- 반드시 실제 접근 가능한 URL만 제공
-(404, 500, "Page Not Found", "존재하지 않는 페이지" 등이 보이면 그 자료는 사용하면 안 됩니다.)
-- 검색 결과 페이지, 채널/목록/카테고리 페이지 사용 금지
-- 예: google.com/search, search.naver.com, youtube.com/results
-- 예: URL에 ?q=, ?query=, ?search_query= 가 포함된 경우
-- 예: /tag/, /category/, /topics/, /series/, /channel/, /playlist 등
-- **URL을 스스로 만들어 내거나 규칙으로 추측해서 조합하지 마세요.**
-- 도메인 + 강좌/문서 제목을 이어붙여서 새 URL을 만드는 방식은 금지입니다.
-- **description 필드 안에 URL·도메인·링크를 절대 넣지 마세요.**
-- http, https, www, .com, .org, youtu 같은 문자열이 들어가면 안 됩니다.
-- `[텍스트](URL)` 형태의 마크다운 링크도 금지입니다.
+[CRITICAL CONSTRAINTS - VIOLATION = TASK FAILURE]
 
-📚 **검색 대상**:
-- 유튜브 강의 영상 (한국어 또는 영어)
-- 가능하면 https://www.youtube.com/watch?v=... 또는 https://youtu.be/... 형태의 개별 영상 페이지
-- 기술 블로그 (velog, tistory, medium 등)
-- 목록/태그 페이지가 아닌, 실제 글 상세 페이지
-- 공식 문서
-- 라이브러리/언어/프레임워크의 특정 기능이나 개념을 설명하는 문서 페이지
-- 온라인 강좌
-- 인프런, 유데미, 클래스101, 부스트코스 등 강좌 상세 페이지
+1. URL AUTHENTICITY REQUIREMENT
+   - Every URL MUST be extracted directly from web search results
+   - You MUST have seen the actual page content before including a URL
+   - NEVER construct URLs by combining domain + guessed path
+   - NEVER use placeholder patterns like "example.com" or "your-course-url"
 
-⚠️ **필수 출력 형식** (JSON):
-```json
-{{
-  "materials": [
-    {{
-      "title": "자료 제목",
-      "type": "유튜브",
-      "url": "https://실제URL",
-      "description": "이 자료가 학습에 도움이 되는 이유 (URL 없이 한국어 1~2문장)"
-    }},
-    {{
-      "title": "자료 제목",
-      "type": "블로그",
-      "url": "https://실제URL",
-      "description": "이 자료가 학습에 도움이 되는 이유 (URL 없이 한국어 1~2문장)"
-    }}
-  ]
-}}
-```
+2. PROHIBITED URL PATTERNS (auto-reject if matched)
+   - Search result pages: contains "?q=", "?query=", "?search_query=", "/search", "/results"
+   - Aggregation pages: contains "/tag/", "/category/", "/topics/", "/channel/", "/playlist/", "/series/"
+   - Homepage or index: URL ends with just domain (e.g., "youtube.com", "inflearn.com")
+   - Fabricated URLs: any URL you did not directly observe in search results
 
-📌 요청사항:
-- 총 3-4개의 학습 자료 추천
-- 다양한 타입의 자료 포함 (유튜브, 블로그, 공식문서 등)
-- 반드시 한국어 또는 영어로 된 실제 자료
-- title과 description은 한국어로 자연스럽게 작성
-- description에는 어떤 형태의 URL·도메인·링크도 넣지 말 것
-- URL은 반드시 실제로 접속이 되는 상세 페이지 URL만 사용 (검색·목록·채널 페이지 금지)
+3. REQUIRED URL PATTERNS (prefer these)
+   - YouTube individual video: youtube.com/watch?v=[11-char-id] or youtu.be/[11-char-id]
+   - Blog post with slug: velog.io/@user/[post-slug], tistory.com/[number], medium.com/@user/[title-slug]
+   - Course detail page: inflearn.com/course/[course-slug], udemy.com/course/[course-slug]
+   - Documentation specific page: docs.python.org/3/library/[module].html, developer.mozilla.org/en-US/docs/[path]
+
+4. DESCRIPTION FIELD RULES
+   - Write in Korean, 1-2 sentences only
+   - Explain WHY this resource helps learn the topic
+   - FORBIDDEN in description: URLs, domains, http, https, www, .com, .org, markdown links
+
+[OUTPUT SCHEMA]
+Return ONLY valid JSON. No markdown code blocks, no explanations.
+
+{{"materials": [
+  {{"title": "Korean title of resource", "type": "유튜브|블로그|공식문서|온라인강좌", "url": "https://verified-url", "description": "Korean description without URLs"}},
+  ...
+]}}
+
+[TASK REQUIREMENTS]
+- Find 3-4 diverse resources (mix video, blog, docs, courses)
+- Prioritize Korean resources, English acceptable if high quality
+- Each URL must be a direct link to specific content, not a listing page
+- Verify URL structure matches expected patterns before including
+
+[VERIFICATION CHECKLIST - Apply to each URL before output]
+[ ] URL was found in actual search results (not constructed)
+[ ] URL points to specific content (not search/list/channel page)
+[ ] URL structure matches known valid patterns
+[ ] Title accurately reflects the linked content
+
+Now search and return verified materials for: "{topic}"
 """
 
     response = call_gpt(prompt, use_search=True)
@@ -244,79 +238,93 @@ async def generate_plan(request: PlanGenerateRequest, current_user: Dict = Depen
     rest_days_str = ', '.join(request.restDays) if request.restDays else '없음'
     rest_days_list = request.restDays if request.restDays else []
 
-    prompt = f"""[시스템 지시]
-당신은 개인 맞춤형 학습 플래너입니다.
-출력 속도를 최우선으로 하여 4주(28일) 학습 일정을 생성하세요.
-반드시 JSON만 출력하고, 불필요한 설명이나 창의적 표현은 하지 마세요.
+    prompt = f"""[SYSTEM ROLE]
+You are a personalized learning planner. Generate a 4-week (28-day) study schedule.
 
-[입력 정보]
-- 스킬: "{request.skill}"
-- 하루 공부 시간: {request.hourPerDay}시간
-- 시작 날짜: {request.startDate}
-- 쉬는 요일: {rest_days_str}
-- 학습자 수준: {request.selfLevel}
+[INPUT PARAMETERS]
+- Skill: "{request.skill}"
+- Daily study time: {request.hourPerDay} hours
+- Start date: {request.startDate}
+- Rest days: {rest_days_str}
+- Learner level: {request.selfLevel}
 
-────────────────────────
-[쉬는 요일 규칙 – 매우 중요]
+[REST DAY EXCLUSION - CRITICAL]
+Rest days to EXCLUDE: {rest_days_str}
 
-쉬는 요일: {rest_days_str}
+Day mapping (Korean to weekday):
+- 월 = Monday (weekday 0)
+- 화 = Tuesday (weekday 1)
+- 수 = Wednesday (weekday 2)
+- 목 = Thursday (weekday 3)
+- 금 = Friday (weekday 4)
+- 토 = Saturday (weekday 5)
+- 일 = Sunday (weekday 6)
 
-⚠️ 위 쉬는 요일에 해당하는 날짜는 daily_schedule에서 **절대 포함하지 마세요!**
-- 요일 매핑: 월=Monday, 화=Tuesday, 수=Wednesday, 목=Thursday, 금=Friday, 토=Saturday, 일=Sunday
-- 예시: 쉬는 요일이 "월, 수, 금"이면 → 화, 목, 토, 일에만 일정 배정
+RULE: If a date falls on any rest day listed above, that date MUST NOT appear in daily_schedule.
+Example: If rest days = "월, 수, 금", only include dates that fall on 화, 목, 토, 일.
 
-────────────────────────
-[속도 최적화 규칙]
+[TASK GENERATION RULES]
 
-1. 하루 태스크 수는 **항상 2개로 고정**
-2. duration은 아래 값 중 하나만 사용
-   - "30분"
-   - "1시간"
-3. description은 **항상 1문장**
-   - 학습 방법을 간단히 설명
-   - 창의적인 표현, 비유, 감정 표현 금지
-4. 태스크 구성은 날짜별로 **유사한 패턴 반복을 허용**
-   - 매일 완전히 새로운 표현을 만들려고 하지 마세요.
+1. TASKS PER DAY: Exactly 2 tasks per day (no more, no less)
 
-────────────────────────
-[기간/날짜 규칙]
-- 시작 날짜부터 정확히 4주(28일)
-- 쉬는 요일은 daily_schedule에서 제외
-- 날짜는 오름차순 정렬
-- 같은 날짜 중복 금지
+2. DURATION VALUES: Use only these exact strings
+   - "30분" (30 minutes)
+   - "1시간" (1 hour)
+   Combined duration should approximate {request.hourPerDay} hours per day.
 
-────────────────────────
-[난이도 흐름]
-- 1주차: 기초 개념
-- 2주차: 기본 실습
-- 3주차: 응용/심화
-- 4주차: 정리 및 미니 프로젝트
+3. TASK TITLE REQUIREMENTS
+   - Must be specific to "{request.skill}"
+   - Include concrete learning objectives (e.g., "Python 리스트 컴프리헨션 학습" not "파이썬 공부")
+   - Progress logically through the curriculum
+   - Written in Korean
 
-────────────────────────
-[출력 JSON 스키마]
-최상위 객체:
-- plan_name
-- total_duration: "4주"
-- daily_schedule
+4. TASK DESCRIPTION
+   - Exactly 1 sentence in Korean
+   - Describe the learning activity concisely
+   - No creative expressions, metaphors, or emotional language
 
-daily_schedule 원소:
-- date: "YYYY-MM-DD"
-- tasks: 길이 2 고정 배열
+[CURRICULUM PROGRESSION]
+Week 1 (Days 1-7): Foundation - Core concepts, basic terminology, fundamental principles
+Week 2 (Days 8-14): Practice - Hands-on exercises, basic implementations, simple examples
+Week 3 (Days 15-21): Application - Advanced topics, real-world scenarios, problem-solving
+Week 4 (Days 22-28): Consolidation - Review, mini-project, integration of learned concepts
 
-task 객체:
-- id: 문자열
-- title: 구체적인 학습 주제
-- description: 1문장 설명
-- duration: "30분" 또는 "1시간"
-- completed: false
+Adjust depth based on learner level: {request.selfLevel}
+- 초급: Focus more on basics, slower progression
+- 중급: Balance theory and practice
+- 고급: Emphasize advanced patterns and optimization
 
-────────────────────────
-[엄격한 제약]
-- 마크다운, 코드블록, 설명 문장 금지
-- JSON 하나만 출력
-- 규칙을 지키는 것이 완성도보다 우선
+[DATE RULES]
+- Start from: {request.startDate}
+- Total span: 28 calendar days
+- Dates in ascending order (YYYY-MM-DD format)
+- No duplicate dates
+- Skip all rest days
 
-지금 바로 JSON만 출력하세요."""
+[OUTPUT SCHEMA - STRICT]
+{{"plan_name": "Korean plan name including {request.skill}",
+  "total_duration": "4주",
+  "daily_schedule": [
+    {{"date": "YYYY-MM-DD",
+      "tasks": [
+        {{"id": "unique-string-id", "title": "Korean task title", "description": "Korean 1-sentence description", "duration": "30분", "completed": false}},
+        {{"id": "unique-string-id", "title": "Korean task title", "description": "Korean 1-sentence description", "duration": "1시간", "completed": false}}
+      ]
+    }},
+    ...
+  ]
+}}
+
+[VALIDATION CHECKLIST]
+- [ ] All dates are within 28-day range from start
+- [ ] No rest day dates included
+- [ ] Exactly 2 tasks per day
+- [ ] All task IDs are unique strings
+- [ ] All durations are "30분" or "1시간"
+- [ ] Dates are sorted ascending
+- [ ] No duplicate dates
+
+Output ONLY the JSON object. No markdown, no explanations."""
 
     response = call_gpt(prompt, use_search=False)
     data = extract_json(response)
