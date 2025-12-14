@@ -30,82 +30,91 @@ async def get_recommended_courses(
     log_stage(6, "강좌 추천", current_user['name'])
     log_navigation(current_user['name'], "강좌 추천 화면")
 
-    # 강화된 프롬프트 - 실제 존재하는 강좌를 웹 검색으로 찾기 + 상세 커리큘럼
-    prompt = f"""[CRITICAL INSTRUCTION]
-You MUST use web search to find REAL, CURRENTLY AVAILABLE courses for "{skill}".
-Do NOT generate fictional courses. Every course must exist and be accessible.
+    # 강화된 프롬프트 - 실제 존재하는 강좌를 웹 검색으로 찾기 + 완전한 상세 커리큘럼
+    prompt = f"""[CRITICAL MISSION]
+You are a course recommendation expert. Find REAL, VERIFIED courses for "{skill}" with COMPLETE lecture lists.
+Use web search extensively. Include BOTH Korean AND English courses.
 
-[MANDATORY SEARCH QUERIES - Execute these searches NOW]
-1. Search: "인프런 {skill} 강좌 추천 커리큘럼"
-2. Search: "{skill} udemy 강의 한글 목차"
-3. Search: "{skill} 유튜브 강좌 재생목록 전체영상"
-4. Search: "{skill} 입문 책 추천 교보문고 목차"
-5. Search: "부스트코스 {skill} 커리큘럼"
+[MANDATORY SEARCH QUERIES - Execute ALL these searches]
+1. "인프런 {skill} 강좌 커리큘럼 전체"
+2. "udemy {skill} course curriculum complete"
+3. "{skill} youtube playlist full course"
+4. "coursera {skill} course syllabus"
+5. "{skill} 책 추천 목차 교보문고"
+6. "{skill} 유튜브 무료 강의 재생목록"
+7. "best {skill} course 2024 curriculum"
 
-[STRICT REQUIREMENTS]
-- Use ONLY URLs you found in search results
-- Every "link" field must be a real URL from your search
-- Course titles must match exactly what appears on the platform
-- If you cannot find real courses, return fewer items rather than fake ones
+[LANGUAGE POLICY]
+- Include BOTH Korean AND English courses
+- English course titles: Keep original English titles
+- English course descriptions: Translate to Korean for summary/reason
+- Books can be Korean or English
 
-[URL VALIDATION]
-ALLOWED patterns:
-- inflearn.com/course/[실제-강좌-슬러그]
-- udemy.com/course/[actual-course-slug]
-- youtube.com/watch?v=[11자리ID]
-- youtube.com/playlist?list=[재생목록ID]
-- product.kyobobook.co.kr/detail/[ISBN]
-- yes24.com/Product/Goods/[상품번호]
+[QUANTITY REQUIREMENTS - CRITICAL]
+Return 6-8 recommendations total:
+- 2-3 Korean paid courses (인프런, 패스트캠퍼스)
+- 2-3 English courses (Udemy, Coursera, edX)
+- 1-2 YouTube playlists (Korean or English)
+- 1-2 Books (Korean or English)
 
-FORBIDDEN patterns:
-- Any URL with /search, ?q=, ?s=, /courses?
-- Generic homepages
-- Made-up URLs
+[CURRICULUM COMPLETENESS - ABSOLUTELY CRITICAL]
+**You MUST list EVERY SINGLE lecture. No exceptions.**
 
-[CURRICULUM REQUIREMENTS - CRITICAL]
-You MUST include COMPLETE curriculum with ALL lectures.
-- If a course has 50 lectures, list ALL 50 lectures
-- If a YouTube playlist has 30 videos, list ALL 30 videos
-- Each lecture MUST have: title, duration, and description
-- Do NOT abbreviate or summarize the curriculum
-- Do NOT write "...외 10개" or similar
-- Include EVERY single lecture from the actual course
+Example: If a course has 24 lectures, you MUST list all 24 lectures.
+- Section 1: Lectures 1-1, 1-2, 1-3, 1-4, 1-5
+- Section 2: Lectures 2-1, 2-2, 2-3, 2-4
+- Section 3: Lectures 3-1, 3-2, 3-3, 3-4, 3-5
+... and so on for ALL lectures.
+
+PROHIBITED:
+- "...외 10개" or "... and 10 more"
+- "나머지 강의" or "remaining lectures"
+- Truncating or summarizing lecture lists
+- Showing only first 3 lectures per section
+
+REQUIRED:
+- Full lecture title exactly as shown on platform
+- Duration for each lecture
+- Brief description (1 sentence)
 
 [OUTPUT FORMAT]
-Return 4-6 courses in this exact JSON structure:
 {{
   "recommendations": [
     {{
-      "id": "uuid-string",
+      "id": "uuid",
       "title": "정확한 강좌명 (플랫폼에서 복사)",
-      "provider": "인프런|유데미|YouTube|교보문고|예스24|부스트코스",
-      "instructor": "실제 강사/저자명",
+      "provider": "인프런|Udemy|Coursera|YouTube|교보문고",
+      "instructor": "강사명",
       "type": "course|book|youtube",
+      "language": "Korean|English",
       "weeks": 4,
       "free": true|false,
       "rating": "4.8",
-      "students": "1,234명",
-      "total_lectures": 42,
-      "total_duration": "12시간 30분",
-      "summary": "강좌 소개 2-3문장",
-      "reason": "{level} 학습자에게 추천하는 이유",
-      "price": "55,000원|무료",
+      "students": "12,345",
+      "total_lectures": 24,
+      "total_duration": "15시간 30분",
+      "summary": "강좌 소개 (한국어로 2-3문장)",
+      "reason": "{level} 학습자에게 추천하는 이유 (한국어)",
+      "price": "₩55,000|$19.99|무료",
       "level_detail": "{level}",
-      "link": "검색에서 찾은 실제 URL",
+      "link": "실제 강좌 URL",
       "curriculum": [
         {{
-          "section": "섹션 1: 섹션명",
+          "section": "Section 1: Introduction",
           "lectures": [
-            {{"title": "1-1. 실제 강의 제목", "duration": "15분", "description": "강의 간단 설명"}},
-            {{"title": "1-2. 실제 강의 제목", "duration": "20분", "description": "강의 간단 설명"}},
-            {{"title": "1-3. 실제 강의 제목", "duration": "18분", "description": "강의 간단 설명"}}
+            {{"title": "1-1. Welcome to the Course", "duration": "5분", "description": "Course overview"}},
+            {{"title": "1-2. Setting Up Your Environment", "duration": "15분", "description": "Install tools"}},
+            {{"title": "1-3. Your First Program", "duration": "20분", "description": "Write hello world"}}
           ]
         }},
         {{
-          "section": "섹션 2: 섹션명",
+          "section": "Section 2: Fundamentals",
           "lectures": [
-            {{"title": "2-1. 실제 강의 제목", "duration": "22분", "description": "강의 간단 설명"}},
-            {{"title": "2-2. 실제 강의 제목", "duration": "25분", "description": "강의 간단 설명"}}
+            {{"title": "2-1. Variables and Types", "duration": "25분", "description": "Data types"}},
+            {{"title": "2-2. Operators", "duration": "18분", "description": "Arithmetic operations"}},
+            {{"title": "2-3. Control Flow", "duration": "30분", "description": "If statements"}},
+            {{"title": "2-4. Loops", "duration": "28분", "description": "For and while loops"}},
+            {{"title": "2-5. Functions", "duration": "35분", "description": "Define functions"}}
           ]
         }}
       ]
@@ -113,14 +122,23 @@ Return 4-6 courses in this exact JSON structure:
   ]
 }}
 
-[COMPOSITION]
-- At least 2 FREE resources (YouTube, 부스트코스)
-- 1-2 paid courses (인프런, 유데미)
-- 1-2 books if available
+[URL VALIDATION]
+ALLOWED:
+- inflearn.com/course/[slug]
+- udemy.com/course/[slug]
+- coursera.org/learn/[slug]
+- youtube.com/playlist?list=[id]
+- edx.org/learn/[slug]
+- product.kyobobook.co.kr/detail/[isbn]
+
+FORBIDDEN:
+- Search result pages (/search, ?q=, ?s=)
+- Generic homepages
+- Fictional URLs
 
 Search for "{skill}" courses for {level} level learners.
-Include COMPLETE curriculum with ALL lectures for each course.
-Output ONLY valid JSON. No explanations."""
+Return 6-8 diverse recommendations with COMPLETE curricula.
+Output ONLY valid JSON."""
 
     response = call_gpt(prompt, use_search=True)
     data = extract_json(response)
@@ -132,7 +150,7 @@ Output ONLY valid JSON. No explanations."""
         valid_courses = [c for c in courses if 'example' not in c.get('link', '').lower()]
         if valid_courses:
             log_success(f"강좌 {len(valid_courses)}개 추천 완료")
-            return valid_courses[:6]
+            return valid_courses[:8]  # 최대 8개까지 반환
 
     log_info("GPT 응답 실패 또는 API 키 없음, 기본 추천 반환")
     return [

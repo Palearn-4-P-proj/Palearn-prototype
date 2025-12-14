@@ -544,6 +544,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
     final duration = course['total_duration']?.toString() ?? course['duration']?.toString() ?? '';
     final levelDetail = course['level_detail']?.toString() ?? '';
     final reason = course['reason']?.toString() ?? '';
+    final language = course['language']?.toString() ?? '';
 
     // total_lectures 처리 - 숫자만 추출
     String rawTotalLectures = course['total_lectures']?.toString() ?? '';
@@ -604,7 +605,9 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                   padding: const EdgeInsets.all(20),
                   children: [
                     // 타입 배지
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -616,7 +619,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            type == 'book' ? '📚 도서' : '🎓 강좌',
+                            type == 'book' ? '📚 도서' : (type == 'youtube' ? '▶️ YouTube' : '🎓 강좌'),
                             style: TextStyle(
                               color:
                                   type == 'book' ? Colors.orange[800] : _blue,
@@ -624,7 +627,6 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
@@ -644,6 +646,26 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                             ),
                           ),
                         ),
+                        if (language.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: language == 'English'
+                                  ? Colors.purple[100]
+                                  : Colors.indigo[100],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              language == 'English' ? '🌐 English' : '🇰🇷 한국어',
+                              style: TextStyle(
+                                color: language == 'English'
+                                    ? Colors.purple[800]
+                                    : Colors.indigo[800],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
 
@@ -1297,6 +1319,7 @@ class _CourseListItem extends StatelessWidget {
     final type = data['type'] ?? 'course';
     final free = (data['free'] ?? false);
     final summary = data['summary'] ?? '';
+    final language = data['language']?.toString() ?? '';
 
     // total_lectures에서 숫자만 추출 (54개 -> 54)
     final rawTotalLectures = data['total_lectures']?.toString() ?? '';
@@ -1327,7 +1350,9 @@ class _CourseListItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 상단 배지
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 Container(
                   padding:
@@ -1337,7 +1362,7 @@ class _CourseListItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    type == 'book' ? '📚 도서' : '🎓 강좌',
+                    type == 'book' ? '📚 도서' : (type == 'youtube' ? '▶️ YouTube' : '🎓 강좌'),
                     style: TextStyle(
                       fontSize: 12,
                       color: type == 'book' ? Colors.orange[700] : _blue,
@@ -1345,7 +1370,6 @@ class _CourseListItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
                 if (free)
                   Container(
                     padding:
@@ -1363,7 +1387,23 @@ class _CourseListItem extends StatelessWidget {
                       ),
                     ),
                   ),
-                const Spacer(),
+                if (language.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: language == 'English' ? Colors.purple[50] : Colors.indigo[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      language == 'English' ? '🌐 EN' : '🇰🇷 KR',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: language == 'English' ? Colors.purple[700] : Colors.indigo[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 Text(
                   provider,
                   style: const TextStyle(
