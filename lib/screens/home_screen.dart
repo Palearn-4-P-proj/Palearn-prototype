@@ -310,6 +310,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final percentLabel = '${(todayProgress * 100).round()}%';
+    final completedCount =
+        todayTasks.where((t) => t['completed'] == true).length;
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF121212) : _surface;
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -324,6 +328,13 @@ class _HomeScreenState extends State<HomeScreen> {
           onRefresh: _loadAll,
           child: CustomScrollView(
             slivers: [
+              // ✅ 헤더 (프로필, 진행률, 통계/알림 버튼)
+              SliverToBoxAdapter(
+                child: _buildHeader(percentLabel, completedCount),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
               // ✅ 상단 탭 (daily/weekly/monthly)
               SliverToBoxAdapter(child: _buildViewTabs(isDark)),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -339,10 +350,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
 
-              // ✅ WEEKLY 모드
+              // ✅ WEEKLY 모드 - 이번주/다음주 할 일
               if (_viewMode == HomeViewMode.weekly) ...[
                 SliverToBoxAdapter(
-                  child: _buildWeeklyStatsBar(isDark, cardColor, textColor),
+                  child: _buildWeeklyTasksSection(isDark, cardColor, textColor, subTextColor, blueLightColor),
                 ),
               ],
 
@@ -625,6 +636,211 @@ class _HomeScreenState extends State<HomeScreen> {
               }),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ WEEKLY 모드 - 이번주/다음주 할 일 보기
+  Widget _buildWeeklyTasksSection(bool isDark, Color cardColor, Color textColor, Color subTextColor, Color blueLightColor) {
+    final now = DateTime.now();
+    final weekday = now.weekday; // 1=월, 7=일
+    final startOfWeek = now.subtract(Duration(days: weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+    final startOfNextWeek = endOfWeek.add(const Duration(days: 1));
+    final endOfNextWeek = startOfNextWeek.add(const Duration(days: 6));
+
+    // 이번주/다음주 태스크 분류
+    List<Map<String, dynamic>> thisWeekTasks = [];
+    List<Map<String, dynamic>> nextWeekTasks = [];
+
+    for (final plan in myPlans) {
+      final schedule = plan['schedule'] as List? ?? [];
+      for (final day in schedule) {
+        final dateStr = day['date'] as String? ?? '';
+        if (dateStr.isEmpty) continue;
+        final date = DateTime.tryParse(dateStr);
+        if (date == null) continue;
+
+        final tasks = day['tasks'] as List? ?? [];
+        for (final task in tasks) {
+          final taskWithDate = Map<String, dynamic>.from(task as Map);
+          taskWithDate['date'] = dateStr;
+          taskWithDate['planTitle'] = plan['skill'] ?? plan['title'] ?? '';
+
+          if (date.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
+              date.isBefore(endOfWeek.add(const Duration(days: 1)))) {
+            thisWeekTasks.add(taskWithDate);
+          } else if (date.isAfter(endOfWeek) &&
+              date.isBefore(endOfNextWeek.add(const Duration(days: 1)))) {
+            nextWeekTasks.add(taskWithDate);
+          }
+        }
+      }
+    }
+
+    // 날짜순 정렬
+    thisWeekTasks.sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+    nextWeekTasks.sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+
+    return Column(
+      children: [
+        // 이번주 할 일
+        _buildWeekSection(
+          title: '이번 주 할 일',
+          subtitle: '${startOfWeek.month}/${startOfWeek.day} - ${endOfWeek.month}/${endOfWeek.day}',
+          tasks: thisWeekTasks,
+          isDark: isDark,
+          cardColor: cardColor,
+          textColor: textColor,
+          subTextColor: subTextColor,
+          blueLightColor: blueLightColor,
+          emptyMessage: '이번 주 학습 일정이 없습니다',
+        ),
+        const SizedBox(height: 20),
+        // 다음주 할 일
+        _buildWeekSection(
+          title: '다음 주 할 일',
+          subtitle: '${startOfNextWeek.month}/${startOfNextWeek.day} - ${endOfNextWeek.month}/${endOfNextWeek.day}',
+          tasks: nextWeekTasks,
+          isDark: isDark,
+          cardColor: cardColor,
+          textColor: textColor,
+          subTextColor: subTextColor,
+          blueLightColor: blueLightColor,
+          emptyMessage: '다음 주 학습 일정이 없습니다',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeekSection({
+    required String title,
+    required String subtitle,
+    required List<Map<String, dynamic>> tasks,
+    required bool isDark,
+    required Color cardColor,
+    required Color textColor,
+    required Color subTextColor,
+    required Color blueLightColor,
+    required String emptyMessage,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 30 : 10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.date_range, color: _blue, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: subTextColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (tasks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Text(
+                  emptyMessage,
+                  style: TextStyle(color: subTextColor),
+                ),
+              ),
+            )
+          else
+            ...tasks.map((task) {
+              final date = task['date'] as String? ?? '';
+              final parsedDate = DateTime.tryParse(date);
+              final dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+              final dayName = parsedDate != null ? dayNames[parsedDate.weekday - 1] : '';
+              final dateDisplay = parsedDate != null ? '${parsedDate.month}/${parsedDate.day} ($dayName)' : '';
+              final completed = task['completed'] ?? false;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: completed
+                      ? (isDark ? _green.withAlpha(30) : _green.withAlpha(20))
+                      : blueLightColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: completed
+                      ? Border.all(color: _green.withAlpha(100))
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: completed ? _green : _blue,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        completed ? Icons.check : Icons.schedule,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task['title'] ?? '학습',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                              decoration: completed ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${task['planTitle']} · $dateDisplay',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: subTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (completed)
+                      const Icon(Icons.check_circle, color: _green, size: 20),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
