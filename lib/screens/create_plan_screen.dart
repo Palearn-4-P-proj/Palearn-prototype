@@ -153,7 +153,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         isExpanded: true,
-                        hint: const Text('예: 파이썬, 머신러닝, 웹개발 등'),
+                        hint: const Text('학습 분야를 선택하세요'),
                         value: selectedSkill,
                         items: [
                           for (final s in skills)
@@ -220,9 +220,38 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                         FilterChip(
                           selected: restDays.contains(d),
                           label: Text('$d요일'),
-                          onSelected: (sel) => setState(() {
-                            sel ? restDays.add(d) : restDays.remove(d);
-                          }),
+                          onSelected: (sel) {
+                            // ✅ 선택하려는 경우
+                            if (sel) {
+                              // 🚨 이미 6개 선택된 상태 → 7개째는 막기
+                              if (restDays.length == 6) {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    title: const Text('쉬는 요일 설정'),
+                                    content: const Text(
+                                      '모든 요일을 쉬는 날로 설정할 수는 없어요.\n최소 하루는 학습일로 남겨주세요 🙂',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('확인'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                return; // ❗ 추가 선택 중단
+                              }
+
+                              setState(() => restDays.add(d));
+                            } else {
+                              // ✅ 해제는 항상 허용
+                              setState(() => restDays.remove(d));
+                            }
+                          },
                         ),
                     ],
                   ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../data/api_service.dart';
 import '../core/widgets.dart';
 import '../main.dart';
@@ -174,30 +173,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.w800, color: textColor)),
                       const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('ID: $userId',
-                              style: TextStyle(color: subTextColor)),
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () {
-                              Clipboard.setData(ClipboardData(text: userId));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('친구 코드가 복사되었습니다'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                            child: Icon(
-                              Icons.copy,
-                              size: 16,
-                              color: subTextColor,
-                            ),
-                          ),
-                        ],
-                      ),
+                      Text('ID: $userId',
+                          style: TextStyle(color: subTextColor)),
 
                       const SizedBox(height: 28),
 

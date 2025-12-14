@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/api_service.dart';
+import '../core/widgets.dart';
 
 const _blueLight = Color(0xFFE7F0FF);
 const _ink = Color(0xFF0E3E3E);
@@ -47,10 +48,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 100),
+            : Column(
                 children: [
+                  // 헤더 (여백 없이 상단에 붙음)
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
                     decoration: const BoxDecoration(
                       color: Color(0xFF7DB2FF),
@@ -76,40 +78,31 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  if (_reviewItems.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Text(
-                        '복습할 항목이 없습니다.',
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
-                      ),
-                    )
-                  else
-                    ..._reviewItems.map((item) => _ReviewCard(
-                          title: item['type']?.toString() ?? '',
-                          subtitle: item['title']?.toString() ?? '',
-                        )),
+                  // 콘텐츠 리스트
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                      children: [
+                        if (_reviewItems.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: Text(
+                              '복습할 항목이 없습니다.',
+                              style: TextStyle(color: Colors.black54, fontSize: 16),
+                            ),
+                          )
+                        else
+                          ..._reviewItems.map((item) => _ReviewCard(
+                                title: item['type']?.toString() ?? '',
+                                subtitle: item['title']?.toString() ?? '',
+                              )),
+                      ],
+                    ),
+                  ),
                 ],
               ),
       ),
-      bottomNavigationBar: Container(
-        height: 84,
-        decoration: const BoxDecoration(
-          color: Color(0xFFE3EEFF),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: const [
-            Icon(Icons.home, size: 28, color: _ink),
-            Icon(Icons.insights_outlined, size: 28, color: _ink),
-            Icon(Icons.sync_alt, size: 28, color: _ink),
-            Icon(Icons.layers_outlined, size: 28, color: _ink),
-            Icon(Icons.person_outline, size: 28, color: _ink),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const CommonBottomNav(currentItem: NavItem.home),
     );
   }
 }

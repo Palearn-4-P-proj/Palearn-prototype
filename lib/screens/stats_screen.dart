@@ -182,7 +182,7 @@ class _StatsScreenState extends State<StatsScreen> with SingleTickerProviderStat
                 icon: Icons.percent,
                 value: '$overallRate%',
                 label: '전체 달성률',
-                iconColor: _blue,
+                iconColor: Colors.white,
               ),
             ],
           ),

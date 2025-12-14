@@ -13,6 +13,8 @@ const Color _blueLight = Color(0xFFE7F0FF);
 const Color _surface = Color(0xFFF7F8FD);
 const Color _green = Color(0xFF4CAF50);
 
+enum HomeViewMode { daily, weekly, monthly }
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -22,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String displayName = '사용자';
   double todayProgress = 0.0;
+  HomeViewMode _viewMode = HomeViewMode.daily;
 
   // 오늘의 할 일 (상세 정보 포함)
   List<Map<String, dynamic>> todayTasks = [];
@@ -307,10 +310,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final percentLabel = '${(todayProgress * 100).round()}%';
-    final completedCount =
-        todayTasks.where((t) => t['completed'] == true).length;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF121212) : _surface;
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -325,38 +324,34 @@ class _HomeScreenState extends State<HomeScreen> {
           onRefresh: _loadAll,
           child: CustomScrollView(
             slivers: [
-              // 헤더 - 원형 진행률 차트 + 주간 그래프
-              SliverToBoxAdapter(
-                child: _buildHeader(percentLabel, completedCount),
-              ),
-
+              // ✅ 상단 탭 (daily/weekly/monthly)
+              SliverToBoxAdapter(child: _buildViewTabs(isDark)),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // 주간 학습 통계 바 그래프
-              SliverToBoxAdapter(
-                child: _buildWeeklyStatsBar(isDark, cardColor, textColor),
-              ),
+              // ✅ DAILY 모드
+              if (_viewMode == HomeViewMode.daily) ...[
+                SliverToBoxAdapter(
+                  child: _buildTodayTasksSection(isDark, cardColor, textColor, subTextColor, blueLightColor),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildMyPlansSection(isDark, cardColor, textColor, subTextColor, blueLightColor),
+                ),
+              ],
 
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              // ✅ WEEKLY 모드
+              if (_viewMode == HomeViewMode.weekly) ...[
+                SliverToBoxAdapter(
+                  child: _buildWeeklyStatsBar(isDark, cardColor, textColor),
+                ),
+              ],
 
-              // 오늘의 할 일 섹션
-              SliverToBoxAdapter(
-                child: _buildTodayTasksSection(isDark, cardColor, textColor, subTextColor, blueLightColor),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // 내 학습 계획 리스트
-              SliverToBoxAdapter(
-                child: _buildMyPlansSection(isDark, cardColor, textColor, subTextColor, blueLightColor),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // 캘린더 미니뷰
-              SliverToBoxAdapter(
-                child: _buildCalendarSection(isDark, cardColor, textColor),
-              ),
+              // ✅ MONTHLY 모드
+              if (_viewMode == HomeViewMode.monthly) ...[
+                SliverToBoxAdapter(
+                  child: _buildCalendarSection(isDark, cardColor, textColor),
+                ),
+              ],
 
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
@@ -364,6 +359,46 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: _bottomBar(),
+    );
+  }
+
+  Widget _buildViewTabs(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: HomeViewMode.values.map((mode) {
+            final selected = _viewMode == mode;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _viewMode = mode);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected ? _blue : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    mode.name.toUpperCase(),
+                    style: TextStyle(
+                      color: selected ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -596,80 +631,91 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTodayTasksSection(bool isDark, Color cardColor, Color textColor, Color subTextColor, Color blueLightColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              const Icon(Icons.today, color: _blue, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                '오늘 해야 할 것',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const Spacer(),
-              if (todayTasks.isNotEmpty)
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: blueLightColor, // ⭐ 오늘 해야할 것 배경색
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                const Icon(Icons.today, color: _blue, size: 22),
+                const SizedBox(width: 8),
                 Text(
-                  '${todayTasks.length}개',
+                  '오늘 해야 할 것',
                   style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 14,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                 ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // 가로 스크롤 태스크 리스트
-        SizedBox(
-          height: 140,
-          child: loadingTasks
-              ? ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: 3,
-                  itemBuilder: (_, __) => const Padding(
-                    padding: EdgeInsets.only(right: 12),
-                    child: TaskCardSkeleton(),
-                  ),
-                )
-              : todayTasks.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle_outline,
-                              size: 40, color: subTextColor),
-                          const SizedBox(height: 8),
-                          Text(
-                            '오늘 할 일이 없습니다',
-                            style: TextStyle(color: subTextColor),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/create_plan'),
-                            child: const Text('새 계획 만들기'),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: todayTasks.length,
-                      itemBuilder: (_, i) =>
-                          _buildTaskCard(todayTasks[i], i + 1, isDark, cardColor, textColor, blueLightColor),
+                const Spacer(),
+                if (todayTasks.isNotEmpty)
+                  Text(
+                    '${todayTasks.length}개',
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 14,
                     ),
-        ),
-      ],
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 가로 스크롤 태스크 리스트
+          SizedBox(
+            height: 140,
+            child: loadingTasks
+                ? ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: 3,
+                    itemBuilder: (_, __) => const Padding(
+                      padding: EdgeInsets.only(right: 12),
+                      child: TaskCardSkeleton(),
+                    ),
+                  )
+                : todayTasks.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle_outline,
+                                size: 40, color: subTextColor),
+                            const SizedBox(height: 8),
+                            Text(
+                              '오늘 할 일이 없습니다',
+                              style: TextStyle(color: subTextColor),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/create_plan'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: subTextColor,
+                              ),
+                              child: const Text('새 계획 만들기'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: todayTasks.length,
+                        itemBuilder: (_, i) =>
+                            _buildTaskCard(todayTasks[i], i + 1, isDark, cardColor, textColor, blueLightColor),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1013,7 +1059,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Icon(Icons.calendar_month, color: _blue, size: 22),
               const SizedBox(width: 8),
               Text(
-                '학습 캘린더',
+                '월간 캘린더',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1023,6 +1069,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const Spacer(),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/review'),
+                style: TextButton.styleFrom(
+                  foregroundColor: subTextColor,
+                ),
                 child: const Text('어제 복습하기 →'),
               ),
             ],
@@ -1047,7 +1096,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // 월 선택 헤더
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     onPressed: () => setState(() => _focusedMonth = DateTime(
