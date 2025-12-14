@@ -30,89 +30,64 @@ async def get_recommended_courses(
     log_stage(6, "강좌 추천", current_user['name'])
     log_navigation(current_user['name'], "강좌 추천 화면")
 
-    # 강화된 프롬프트 - 실제 강좌/도서 링크 + 상세 커리큘럼 정보 필수
-    prompt = f"""[SYSTEM ROLE]
-당신은 "{skill}" 분야 학습자를 위한 교육 추천 AI입니다.
-GPT-4o 웹 검색 기능을 사용하여 실제 존재하는 강좌와 도서를 찾아 추천합니다.
-오직 JSON만 출력하세요. 설명/사과/메타 발화 금지.
+    # 강화된 프롬프트 - 실제 존재하는 강좌를 웹 검색으로 찾기
+    prompt = f"""[CRITICAL INSTRUCTION]
+You MUST use web search to find REAL, CURRENTLY AVAILABLE courses for "{skill}".
+Do NOT generate fictional courses. Every course must exist and be accessible.
 
-────────────────────────────────
-[URL 안정성 규칙 - CRITICAL]
+[MANDATORY SEARCH QUERIES - Execute these searches NOW]
+1. Search: "인프런 {skill} 강좌 추천"
+2. Search: "{skill} udemy 강의 한글"
+3. Search: "{skill} 유튜브 강좌 재생목록"
+4. Search: "{skill} 입문 책 추천 교보문고"
+5. Search: "부스트코스 {skill}"
 
-1. 웹 검색에서 직접 확인한 URL만 사용
-   - 검색 결과에서 실제로 본 URL만 출력
-   - 추측/조합/번역으로 URL 생성 금지
+[STRICT REQUIREMENTS]
+- Use ONLY URLs you found in search results
+- Every "link" field must be a real URL from your search
+- Course titles must match exactly what appears on the platform
+- If you cannot find real courses, return fewer items rather than fake ones
 
-2. 금지 URL 패턴:
-   - 검색/카테고리 페이지: ?q=, ?search=, /search, /courses?s=
-   - 홈페이지/랜딩: 도메인만 있는 URL
-   - 404/접근불가 페이지
+[URL VALIDATION]
+ALLOWED patterns:
+- inflearn.com/course/[실제-강좌-슬러그]
+- udemy.com/course/[actual-course-slug]
+- youtube.com/watch?v=[11자리ID]
+- youtube.com/playlist?list=[재생목록ID]
+- product.kyobobook.co.kr/detail/[ISBN]
+- yes24.com/Product/Goods/[상품번호]
 
-3. 허용 URL 예시:
-   - inflearn.com/course/[course-slug]
-   - udemy.com/course/[course-slug]
-   - youtube.com/watch?v=[video-id]
-   - youtube.com/playlist?list=[playlist-id]
+FORBIDDEN patterns:
+- Any URL with /search, ?q=, ?s=, /courses?
+- Generic homepages
+- Made-up URLs
 
-────────────────────────────────
-[추천 구성]
-총 6개:
-- 무료 콘텐츠 2개 이상 (YouTube, 부스트코스 등)
-- 유료 강좌 2개 이하
-- 도서 1~2개 (교보문고, 예스24)
-
-────────────────────────────────
-[핵심 요구사항: 상세 커리큘럼]
-
-각 강좌/도서에 대해 반드시 실제 커리큘럼 정보를 포함:
-
-1. 온라인 강좌의 경우:
-   - 섹션별로 구분하여 모든 강의 제목 나열
-   - 각 강의의 재생 시간 포함
-   - 총 강의 수와 총 학습 시간 명시
-
-2. 도서의 경우:
-   - 실제 목차 (챕터별)
-   - 페이지 수
-
-3. YouTube 재생목록의 경우:
-   - 모든 영상 제목 나열
-   - 각 영상 길이
-
-────────────────────────────────
-[OUTPUT SCHEMA - 상세 커리큘럼 포함]
+[OUTPUT FORMAT]
+Return 4-6 courses in this exact JSON structure:
 {{
   "recommendations": [
     {{
-      "id": "고유ID",
-      "title": "강좌/도서 실제 제목",
-      "provider": "인프런|유데미|YouTube|교보문고|부스트코스",
-      "instructor": "강사명/저자명",
+      "id": "uuid-string",
+      "title": "정확한 강좌명 (플랫폼에서 복사)",
+      "provider": "인프런|유데미|YouTube|교보문고|예스24|부스트코스",
+      "instructor": "실제 강사/저자명",
       "type": "course|book|youtube",
-      "weeks": 예상 학습 주수,
+      "weeks": 4,
       "free": true|false,
-      "rating": "4.8/5.0",
-      "students": "수강생/구매자 수",
-      "total_lectures": 총 강의 수,
-      "total_duration": "총 10시간 30분",
-      "summary": "강좌/도서 소개 (2-3문장)",
-      "reason": "{level} 학습자에게 추천하는 구체적 이유",
+      "rating": "4.8",
+      "students": "1,234명",
+      "total_lectures": 42,
+      "total_duration": "12시간 30분",
+      "summary": "강좌 소개 2-3문장",
+      "reason": "{level} 학습자에게 추천하는 이유",
       "price": "55,000원|무료",
-      "level_detail": "입문|초급|중급|고급",
-      "link": "실제 상세페이지 URL",
+      "level_detail": "{level}",
+      "link": "검색에서 찾은 실제 URL",
       "curriculum": [
         {{
-          "section": "섹션 1: 기초 개념",
+          "section": "섹션명",
           "lectures": [
-            {{"title": "1-1. 강의 제목", "duration": "15분", "description": "강의 설명"}},
-            {{"title": "1-2. 강의 제목", "duration": "20분", "description": "강의 설명"}}
-          ]
-        }},
-        {{
-          "section": "섹션 2: 심화 학습",
-          "lectures": [
-            {{"title": "2-1. 강의 제목", "duration": "25분", "description": "강의 설명"}},
-            {{"title": "2-2. 강의 제목", "duration": "30분", "description": "강의 설명"}}
+            {{"title": "강의 제목", "duration": "15분"}}
           ]
         }}
       ]
@@ -120,18 +95,13 @@ GPT-4o 웹 검색 기능을 사용하여 실제 존재하는 강좌와 도서를
   ]
 }}
 
-────────────────────────────────
-[커리큘럼 품질 체크리스트]
-- [ ] 각 섹션에 실제 강의명이 있는가 (placeholder 금지)
-- [ ] 강의별 시간/분량이 명시되어 있는가
-- [ ] total_lectures와 curriculum 내 강의 수가 일치하는가
-- [ ] 섹션 구분이 논리적인가
+[COMPOSITION]
+- At least 2 FREE resources (YouTube, 부스트코스)
+- 1-2 paid courses (인프런, 유데미)
+- 1-2 books if available
 
-[검색 대상]
-주제: "{skill}"
-대상 수준: {level}
-
-총 6개 추천. JSON만 출력."""
+Search for "{skill}" courses for {level} level learners.
+Output ONLY valid JSON. No explanations."""
 
     response = call_gpt(prompt, use_search=True)
     data = extract_json(response)

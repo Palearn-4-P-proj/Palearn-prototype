@@ -14,7 +14,8 @@ class RecommendCoursesScreen extends StatefulWidget {
   State<RecommendCoursesScreen> createState() => _RecommendCoursesScreenState();
 }
 
-class _RecommendCoursesScreenState extends State<RecommendCoursesScreen> {
+class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
+    with TickerProviderStateMixin {
   List<Map<String, dynamic>> courses = [];
   String _skill = 'general';
   String _level = '초급';
@@ -24,11 +25,91 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen> {
   String _searchStatus = 'idle';
   int _elapsedSeconds = 0;  // 경과 시간 표시용
   Timer? _elapsedTimer;  // 경과 시간 타이머
+  Timer? _tipTimer;  // 팁 전환 타이머
+  int _currentTipIndex = 0;
+
+  // 애니메이션 컨트롤러
+  late AnimationController _pulseController;
+  late AnimationController _rotateController;
+  late Animation<double> _pulseAnimation;
 
   // 계획 설정 정보 (quiz_result_screen에서 전달받음)
   double _hourPerDay = 1.0;
   String _startDate = '';
   List<String> _restDays = [];
+
+  // Palearn 사용 팁 (로딩 중 표시)
+  final List<Map<String, dynamic>> _tips = [
+    {
+      'icon': Icons.search,
+      'title': 'AI 강좌 검색',
+      'desc': 'GPT-5가 인프런, 유데미, 유튜브에서 실제 강좌를 검색합니다'
+    },
+    {
+      'icon': Icons.verified,
+      'title': '검증된 URL만 제공',
+      'desc': '실제로 접근 가능한 강좌 링크만 추천해 드립니다'
+    },
+    {
+      'icon': Icons.school,
+      'title': '수준별 맞춤 추천',
+      'desc': '퀴즈 결과를 바탕으로 적합한 난이도의 강좌를 찾습니다'
+    },
+    {
+      'icon': Icons.menu_book,
+      'title': '도서도 함께 추천',
+      'desc': '온라인 강좌뿐만 아니라 관련 도서도 추천해 드립니다'
+    },
+    {
+      'icon': Icons.play_circle_filled,
+      'title': '무료 콘텐츠 포함',
+      'desc': '유튜브, 부스트코스 등 무료 학습 자료도 함께 제공합니다'
+    },
+    {
+      'icon': Icons.list_alt,
+      'title': '상세 커리큘럼 확인',
+      'desc': '각 강좌의 섹션별 강의 목록과 시간을 미리 확인하세요'
+    },
+    {
+      'icon': Icons.schedule,
+      'title': '학습 기간 안내',
+      'desc': '각 강좌별 예상 학습 기간을 함께 알려드립니다'
+    },
+    {
+      'icon': Icons.star,
+      'title': '평점과 수강생 수',
+      'desc': '다른 학습자들의 평가를 참고하여 선택하세요'
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 펄스 애니메이션
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // 회전 애니메이션
+    _rotateController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+
+    // 4초마다 팁 변경
+    _tipTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (mounted && _loading) {
+        setState(() {
+          _currentTipIndex = (_currentTipIndex + 1) % _tips.length;
+        });
+      }
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -51,6 +132,9 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen> {
   @override
   void dispose() {
     _elapsedTimer?.cancel();
+    _tipTimer?.cancel();
+    _pulseController.dispose();
+    _rotateController.dispose();
     super.dispose();
   }
 
@@ -115,6 +199,281 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen> {
     } else {
       return 'GPT가 신중하게 추천을 준비 중입니다\n잠시만 더 기다려주세요!';
     }
+  }
+
+  // 로딩 UI 빌더
+  Widget _buildLoadingUI() {
+    final currentTip = _tips[_currentTipIndex];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+
+          // AI 모델 배지
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            child: Container(
+              key: ValueKey<String>(_searchModel),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _blue.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: _blue.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RotationTransition(
+                    turns: _rotateController,
+                    child: const Icon(Icons.auto_awesome, color: _blue, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _searchModel.isNotEmpty ? _searchModel : 'GPT-5 Search API',
+                    style: const TextStyle(
+                      color: _blue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          // 펄스 애니메이션 아이콘
+          ScaleTransition(
+            scale: _pulseAnimation,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  colors: [
+                    _blue.withValues(alpha: 0.3),
+                    _blue.withValues(alpha: 0.1),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: _blue.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.school,
+                    size: 38,
+                    color: _blue,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // 메인 메시지
+          Text(
+            _getLoadingTitle(),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: _ink,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 12),
+
+          // 상세 메시지
+          Text(
+            _getLoadingMessage(),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 20),
+
+          // 경과 시간 + 상태
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _blueLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _searchStatus == 'completed' ? Icons.check_circle : Icons.access_time,
+                      size: 14,
+                      color: _searchStatus == 'completed' ? Colors.green : _blue,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${_elapsedSeconds}초 경과',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          // 팁 카드
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              key: ValueKey<int>(_currentTipIndex),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _blue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      currentTip['icon'] as IconData,
+                      color: _blue,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentTip['title'] as String,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          currentTip['desc'] as String,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 팁 인디케이터
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_tips.length, (index) {
+              return Container(
+                width: index == _currentTipIndex ? 20 : 6,
+                height: 6,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                decoration: BoxDecoration(
+                  color: index == _currentTipIndex
+                      ? _blue
+                      : _blue.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(height: 24),
+
+          // 검색 플랫폼 안내
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.amber[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber[200]!),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 20, color: Colors.amber[700]),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '인프런, 유데미, 유튜브, 부스트코스 등에서\n$_skill 관련 최고의 강좌를 검색 중입니다',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.amber[900],
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadRecommendations() async {
@@ -873,127 +1232,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen> {
             // 리스트
             Expanded(
               child: _loading
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // 로딩 애니메이션
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: _blueLight,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  valueColor: AlwaysStoppedAnimation<Color>(_blue),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            // 메인 메시지
-                            Text(
-                              _getLoadingTitle(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: _ink,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-
-                            // 상세 상태 메시지
-                            Text(
-                              _getLoadingMessage(),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // 경과 시간 표시
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${_elapsedSeconds}초 경과',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ),
-
-                            // 검색 모델 정보
-                            if (_searchModel.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _searchStatus == 'searching'
-                                        ? Icons.search
-                                        : Icons.check_circle,
-                                    size: 16,
-                                    color: _searchStatus == 'completed'
-                                        ? Colors.green
-                                        : _blue,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _searchModel,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-
-                            const SizedBox(height: 24),
-
-                            // 안내 메시지
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.amber[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.amber[200]!),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.info_outline, size: 18, color: Colors.amber[700]),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'AI가 인프런, 유데미, 코세라 등에서\n최적의 강좌를 검색하고 있습니다',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.amber[900],
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
+                  ? _buildLoadingUI()
                   : courses.isEmpty
                       ? const Center(
                           child: Text(
