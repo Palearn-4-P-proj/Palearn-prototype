@@ -103,6 +103,125 @@ Now search and return verified materials for: "{topic}"
     }
 
 
+@router.get("/course_details")
+async def get_course_details(topic: str, current_user: Dict = Depends(get_current_user)):
+    """주제에 대한 상세 커리큘럼 정보 검색 (강의명, 목차, 영상 목록 포함)"""
+    log_request("GET /plans/course_details", current_user['name'], f"topic={topic}")
+
+    prompt = f"""[SYSTEM ROLE]
+You are an expert learning content researcher using GPT-4o with web search capability.
+Find comprehensive course information for: "{topic}"
+
+[SEARCH STRATEGY]
+1. Search for popular courses on: Inflearn, Udemy, YouTube playlists, Coursera
+2. For each course found, extract detailed curriculum information
+3. Focus on Korean courses first, then English courses
+
+[REQUIRED OUTPUT - DETAILED CURRICULUM]
+For each course/playlist found, extract:
+- Full course title (exact name as shown on platform)
+- Instructor/creator name
+- Total duration and number of lectures
+- Complete table of contents (all chapters/sections)
+- Individual lecture names within each section
+- Price (free or paid amount)
+- Platform name
+
+[OUTPUT SCHEMA - STRICT JSON]
+{{
+  "search_model": "GPT-4o with web search",
+  "topic": "{topic}",
+  "courses": [
+    {{
+      "title": "Exact course title from platform",
+      "instructor": "Instructor name",
+      "platform": "Inflearn|Udemy|YouTube|Coursera",
+      "url": "Direct course URL",
+      "price": "무료|49,000원|etc",
+      "total_lectures": 42,
+      "total_duration": "12시간 30분",
+      "rating": "4.8/5.0 (1,234 reviews)",
+      "curriculum": [
+        {{
+          "section": "섹션 1: 기초 개념",
+          "lectures": [
+            {{"name": "1-1. 강의 제목", "duration": "15분"}},
+            {{"name": "1-2. 강의 제목", "duration": "20분"}}
+          ]
+        }},
+        {{
+          "section": "섹션 2: 심화 학습",
+          "lectures": [
+            {{"name": "2-1. 강의 제목", "duration": "25분"}},
+            {{"name": "2-2. 강의 제목", "duration": "18분"}}
+          ]
+        }}
+      ],
+      "description": "Course description in Korean (2-3 sentences)"
+    }}
+  ],
+  "youtube_playlists": [
+    {{
+      "title": "Playlist title",
+      "channel": "Channel name",
+      "url": "Playlist URL",
+      "video_count": 15,
+      "videos": [
+        {{"title": "Video 1 title", "duration": "12:34"}},
+        {{"title": "Video 2 title", "duration": "15:20"}}
+      ]
+    }}
+  ],
+  "free_resources": [
+    {{
+      "title": "Resource title",
+      "type": "공식문서|블로그|튜토리얼",
+      "url": "URL",
+      "description": "Brief description"
+    }}
+  ]
+}}
+
+[CRITICAL REQUIREMENTS]
+1. Include REAL lecture names from actual courses (not generic placeholders)
+2. Every URL must be verified from search results
+3. Curriculum sections must reflect actual course structure
+4. Minimum 2 courses with full curriculum details
+5. Minimum 1 YouTube playlist with video list
+6. All text in Korean except technical terms
+
+[QUALITY CHECKS]
+- Course titles match exactly what appears on platform
+- Lecture names are specific, not "강의 1", "강의 2" style placeholders
+- Duration values are realistic
+- URLs follow platform-specific patterns
+
+Search and provide detailed curriculum information for: "{topic}"
+Output ONLY valid JSON."""
+
+    response = call_gpt(prompt, use_search=True)
+    data = extract_json(response)
+
+    if data and ('courses' in data or 'youtube_playlists' in data):
+        log_success(f"상세 커리큘럼 정보 검색 완료")
+        return data
+
+    # 기본 응답
+    search_query = topic.replace(' ', '+')
+    log_info("GPT 응답 실패, 기본 검색 정보 반환")
+    return {
+        "search_model": "GPT-4o with web search",
+        "topic": topic,
+        "courses": [],
+        "youtube_playlists": [],
+        "free_resources": [
+            {"title": f"{topic} 강의 검색", "type": "검색", "url": f"https://www.inflearn.com/courses?s={search_query}", "description": "인프런에서 관련 강의를 검색합니다."},
+            {"title": f"{topic} 유튜브 검색", "type": "유튜브", "url": f"https://www.youtube.com/results?search_query={search_query}+강의", "description": "유튜브에서 관련 영상을 검색합니다."}
+        ],
+        "message": "상세 정보를 찾을 수 없습니다. 직접 검색해 주세요."
+    }
+
+
 @router.get("")
 async def get_plans(scope: str = "daily", current_user: Dict = Depends(get_current_user)):
     log_request("GET /plans", current_user['name'], f"scope={scope}")

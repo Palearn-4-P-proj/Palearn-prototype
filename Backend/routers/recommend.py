@@ -30,83 +30,108 @@ async def get_recommended_courses(
     log_stage(6, "강좌 추천", current_user['name'])
     log_navigation(current_user['name'], "강좌 추천 화면")
 
-    # 강화된 프롬프트 - 실제 강좌/도서 링크 + 커리큘럼 일치 강제
-    prompt = f"""[시스템 지시]
+    # 강화된 프롬프트 - 실제 강좌/도서 링크 + 상세 커리큘럼 정보 필수
+    prompt = f"""[SYSTEM ROLE]
 당신은 "{skill}" 분야 학습자를 위한 교육 추천 AI입니다.
+GPT-4o 웹 검색 기능을 사용하여 실제 존재하는 강좌와 도서를 찾아 추천합니다.
 오직 JSON만 출력하세요. 설명/사과/메타 발화 금지.
 
 ────────────────────────────────
-[URL 안정성 최우선 규칙 – 매우 중요]
+[URL 안정성 규칙 - CRITICAL]
 
-1. 실제 접근 가능함을 **강하게 확신할 수 있는 경우에만** 링크를 출력하세요.
-   - 조금이라도 불확실하면 해당 항목은 출력하지 마세요.
+1. 웹 검색에서 직접 확인한 URL만 사용
+   - 검색 결과에서 실제로 본 URL만 출력
+   - 추측/조합/번역으로 URL 생성 금지
 
-2. 다음과 같은 URL 생성 행위는 절대 금지입니다:
-   - URL slug를 임의로 번역/조합/추측하여 생성
-   - 강좌 제목을 그대로 URL에 끼워 맞추는 방식
-   - 기억 기반으로 "있을 것 같은" 링크 생성
+2. 금지 URL 패턴:
+   - 검색/카테고리 페이지: ?q=, ?search=, /search, /courses?s=
+   - 홈페이지/랜딩: 도메인만 있는 URL
+   - 404/접근불가 페이지
 
-3. 다음 유형의 페이지는 추천 금지:
-   - 404 / 접근 권한 없음 / 로그인 요구 페이지
-   - 프로모션·랜딩·오리지널·브랜드 페이지
-   - 시리즈/묶음/카테고리 페이지
-   - 수료 과정 소개 페이지 (강의 상세 아님)
-
-4. 확실한 상세 페이지를 찾을 수 없는 경우:
-   - 억지로 비슷한 강좌를 만들지 말고
-   - 도서(book) 또는 유튜브 단일 강의로 대체하세요.
-
-5. link_accessible 필드 규칙:
-   - true로 표기한 링크는 "정상 강의 상세 페이지"라고 확신하는 경우만 허용
-   - false일 가능성이 있는 링크는 절대 출력하지 마세요.
+3. 허용 URL 예시:
+   - inflearn.com/course/[course-slug]
+   - udemy.com/course/[course-slug]
+   - youtube.com/watch?v=[video-id]
+   - youtube.com/playlist?list=[playlist-id]
 
 ────────────────────────────────
-[추천 구성 – 비용 접근성 유지]
-- 전체 6개 중:
-  - 무료 콘텐츠 ≥ 2
-  - 도서(book) ≥ 2
-  - 유료 강좌 ≤ 2
+[추천 구성]
+총 6개:
+- 무료 콘텐츠 2개 이상 (YouTube, 부스트코스 등)
+- 유료 강좌 2개 이하
+- 도서 1~2개 (교보문고, 예스24)
 
 ────────────────────────────────
-[플랫폼 제한]
-- 인프런, 유데미, 클래스101, 부스트코스, 코세라
-- 교보문고, 예스24
-- 유튜브 단일 강의 영상
+[핵심 요구사항: 상세 커리큘럼]
 
-검색/카테고리/블로그 URL 절대 금지
+각 강좌/도서에 대해 반드시 실제 커리큘럼 정보를 포함:
+
+1. 온라인 강좌의 경우:
+   - 섹션별로 구분하여 모든 강의 제목 나열
+   - 각 강의의 재생 시간 포함
+   - 총 강의 수와 총 학습 시간 명시
+
+2. 도서의 경우:
+   - 실제 목차 (챕터별)
+   - 페이지 수
+
+3. YouTube 재생목록의 경우:
+   - 모든 영상 제목 나열
+   - 각 영상 길이
 
 ────────────────────────────────
-[콘텐츠 작성 규칙]
-- summary: 1~2문장
-- curriculum: 실제 페이지 기반 항목 최소 3개
-- 커리큘럼을 확인할 수 없는 경우 해당 항목 제외
-
-────────────────────────────────
-[JSON 형식]
+[OUTPUT SCHEMA - 상세 커리큘럼 포함]
 {{
   "recommendations": [
     {{
-      "id": "uuid",
-      "title": "실제 제목",
-      "provider": "플랫폼명",
-      "instructor": "강사/저자",
-      "type": "course 또는 book",
-      "weeks": 4,
-      "free": true 또는 false,
-      "rating": 45,
-      "students": "1234명",
-      "summary": "소개 요약",
-      "reason": "{level} 학습자에게 적합한 이유",
-      "curriculum": ["목차1", "목차2", "목차3"],
+      "id": "고유ID",
+      "title": "강좌/도서 실제 제목",
+      "provider": "인프런|유데미|YouTube|교보문고|부스트코스",
+      "instructor": "강사명/저자명",
+      "type": "course|book|youtube",
+      "weeks": 예상 학습 주수,
+      "free": true|false,
+      "rating": "4.8/5.0",
+      "students": "수강생/구매자 수",
+      "total_lectures": 총 강의 수,
+      "total_duration": "총 10시간 30분",
+      "summary": "강좌/도서 소개 (2-3문장)",
+      "reason": "{level} 학습자에게 추천하는 구체적 이유",
+      "price": "55,000원|무료",
+      "level_detail": "입문|초급|중급|고급",
       "link": "실제 상세페이지 URL",
-      "price": "가격 또는 무료",
-      "duration": "학습 시간",
-      "level_detail": "{level} 수준"
+      "curriculum": [
+        {{
+          "section": "섹션 1: 기초 개념",
+          "lectures": [
+            {{"title": "1-1. 강의 제목", "duration": "15분", "description": "강의 설명"}},
+            {{"title": "1-2. 강의 제목", "duration": "20분", "description": "강의 설명"}}
+          ]
+        }},
+        {{
+          "section": "섹션 2: 심화 학습",
+          "lectures": [
+            {{"title": "2-1. 강의 제목", "duration": "25분", "description": "강의 설명"}},
+            {{"title": "2-2. 강의 제목", "duration": "30분", "description": "강의 설명"}}
+          ]
+        }}
+      ]
     }}
   ]
 }}
 
-총 6개만 출력하세요."""
+────────────────────────────────
+[커리큘럼 품질 체크리스트]
+- [ ] 각 섹션에 실제 강의명이 있는가 (placeholder 금지)
+- [ ] 강의별 시간/분량이 명시되어 있는가
+- [ ] total_lectures와 curriculum 내 강의 수가 일치하는가
+- [ ] 섹션 구분이 논리적인가
+
+[검색 대상]
+주제: "{skill}"
+대상 수준: {level}
+
+총 6개 추천. JSON만 출력."""
 
     response = call_gpt(prompt, use_search=True)
     data = extract_json(response)
