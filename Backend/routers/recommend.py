@@ -30,57 +30,44 @@ async def get_recommended_courses(
     log_stage(6, "강좌 추천", current_user['name'])
     log_navigation(current_user['name'], "강좌 추천 화면")
 
-    # 강화된 프롬프트 - 반드시 실제 웹 검색 결과만 사용
-    prompt = f"""[ABSOLUTE RULE - READ CAREFULLY]
-You MUST use web search to find REAL courses. DO NOT invent or hallucinate any course.
-If you cannot find real courses through web search, return an empty array.
+    # 프롬프트 - 실제 강좌 페이지 방문 필수
+    prompt = f"""당신은 "{skill}" 학습을 위한 온라인 강좌를 찾아주는 전문가입니다.
+{level} 수준의 학습자에게 적합한 실제 강좌 3-5개를 추천해주세요.
 
-[VERIFICATION PROCESS - MANDATORY]
-For EACH course you include:
-1. You MUST have found it via web search
-2. The URL MUST be from your search results
-3. The course title MUST match exactly what you found
-4. If you didn't search and find it, DO NOT include it
+## 필수 작업 순서
 
-[SEARCH QUERIES TO EXECUTE NOW]
-Execute these searches and ONLY return courses you actually find:
+### 1단계: 검색 실행
+다음 검색어로 웹 검색을 수행하세요:
+- "{skill} 강의 인프런"
+- "{skill} 강좌 udemy"
+- "{skill} tutorial youtube"
 
-Search 1: "site:inflearn.com {skill}"
-Search 2: "site:udemy.com {skill} course"
-Search 3: "site:youtube.com {skill} playlist 강의"
-Search 4: "site:coursera.org {skill}"
+### 2단계: 개별 강좌 페이지 방문 (매우 중요!)
+검색 결과에서 찾은 각 강좌의 **상세 페이지**에 직접 방문하세요.
+- 인프런: https://www.inflearn.com/course/강좌이름 형식의 페이지
+- Udemy: https://www.udemy.com/course/강좌이름 형식의 페이지
+- YouTube: 개별 영상 또는 재생목록 페이지
 
-[WHAT TO EXTRACT FROM SEARCH RESULTS]
-From each course page you find:
-- Exact course title (copy from the page)
-- Instructor name (copy from the page)
-- Price (copy from the page)
-- Rating and student count (copy from the page)
-- Full curriculum/syllabus (copy ALL sections and lectures)
-- Direct URL to the course (NOT search page)
+⚠️ 절대 금지: 검색 결과 목록 페이지(inflearn.com/search?s=..., udemy.com/courses/search/...)에서 정보를 추출하지 마세요.
 
-[STRICT REQUIREMENTS]
-1. ONLY include courses you found via web search
-2. Copy information EXACTLY as shown on the platform
-3. Include the COMPLETE curriculum - every single lecture
-4. URL must be direct course link (e.g., inflearn.com/course/xxx, NOT inflearn.com/courses?s=xxx)
+### 3단계: 상세 정보 추출
+각 강좌 상세 페이지에서 다음 정보를 정확히 복사하세요:
+- 강좌 제목 (페이지에 표시된 그대로)
+- 강사 이름
+- 가격
+- 평점, 수강생 수
+- 총 강의 시간
+- 커리큘럼 (섹션명과 각 강의 제목)
 
-[FORBIDDEN - WILL CAUSE REJECTION]
-- Making up course names that don't exist
-- Inventing instructors
-- Creating fictional URLs
-- Guessing curriculum content
-- Using search result pages as links (/search, ?q=, ?s=)
-- Returning courses you didn't actually find in search
-
-[OUTPUT FORMAT]
+## 출력 형식 (JSON)
 {{
+  "ai_summary": "{level} 수준의 {skill} 학습자를 위해 인프런, Udemy 등에서 실제 검색한 결과입니다. 각 강좌의 상세 페이지를 직접 확인하여 정확한 정보를 수집했습니다.",
   "recommendations": [
     {{
-      "id": "unique-id",
-      "title": "EXACT title from platform",
-      "provider": "인프런|Udemy|Coursera|YouTube",
-      "instructor": "EXACT instructor name",
+      "id": "고유ID",
+      "title": "정확한 강좌 제목",
+      "provider": "인프런|Udemy|YouTube",
+      "instructor": "강사 실명",
       "type": "course|youtube",
       "language": "Korean|English",
       "weeks": 4,
@@ -89,16 +76,16 @@ From each course page you find:
       "students": "12345",
       "total_lectures": 24,
       "total_duration": "15시간 30분",
-      "summary": "Course description in Korean",
-      "reason": "Why good for {level} learner (Korean)",
+      "summary": "강좌 소개 요약 (한국어)",
+      "reason": "이 강좌가 {level} 학습자에게 좋은 이유 (한국어)",
       "price": "₩55,000|$19.99|무료",
       "level_detail": "{level}",
-      "link": "DIRECT course URL from search",
+      "link": "https://www.inflearn.com/course/실제강좌경로",
       "curriculum": [
         {{
-          "section": "Section name from course",
+          "section": "섹션 1: 섹션명",
           "lectures": [
-            {{"title": "Lecture title", "duration": "10분", "description": "Brief desc"}}
+            {{"title": "1강 제목", "duration": "10분"}}
           ]
         }}
       ]
@@ -106,24 +93,43 @@ From each course page you find:
   ]
 }}
 
-[FINAL INSTRUCTION]
-Search for "{skill}" courses for {level} level.
-Return ONLY courses you actually found.
-If search returns nothing useful, return {{"recommendations": []}}.
-Quality over quantity - 3 real courses > 8 fake courses.
-Output valid JSON only."""
+## 엄격한 규칙
+1. 실제로 방문한 강좌 페이지의 정보만 포함
+2. link 필드는 반드시 강좌 상세 페이지 URL (검색 페이지 URL 절대 금지)
+   - 올바른 예: https://www.inflearn.com/course/파이썬-입문-인프런-오리지널
+   - 잘못된 예: https://www.inflearn.com/search?s=파이썬
+3. 정보를 찾을 수 없으면 빈 배열 반환: {{"recommendations": []}}
+4. 허위 정보 생성 절대 금지
+
+JSON만 출력하세요."""
 
     response = call_gpt(prompt, use_search=True)
     data = extract_json(response)
 
     if data and 'error' not in data:
+        # ai_summary 추출 (프론트에서 표시용)
+        ai_summary = data.get('ai_summary', '')
+
         # recommendations 또는 courses 키 모두 지원
         courses = data.get('recommendations', data.get('courses', []))
-        # example.com 필터링
-        valid_courses = [c for c in courses if 'example' not in c.get('link', '').lower()]
+
+        # 유효하지 않은 URL 필터링 (검색 페이지, example.com 등)
+        invalid_patterns = ['example.com', '/search?', '?s=', '?q=', '/courses/search', 'search?keyword']
+        valid_courses = []
+        for c in courses:
+            link = c.get('link', '').lower()
+            # 잘못된 패턴이 하나라도 있으면 제외
+            if not any(pattern in link for pattern in invalid_patterns):
+                # ai_summary를 각 강좌에 추가
+                if ai_summary:
+                    c['ai_summary'] = ai_summary
+                valid_courses.append(c)
+
         if valid_courses:
-            log_success(f"강좌 {len(valid_courses)}개 추천 완료")
+            log_success(f"강좌 {len(valid_courses)}개 추천 완료 (유효한 URL만)")
             return valid_courses[:8]  # 최대 8개까지 반환
+        else:
+            log_info(f"검색 페이지 URL만 반환됨, 필터링 후 0개")
 
     log_info("GPT 응답 실패 또는 API 키 없음, 기본 추천 반환")
     return [

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/api_service.dart';
 import '../core/widgets.dart';
+import '../services/achievement_service.dart';
+import '../widgets/achievement_toast.dart';
 
 const _blue = Color(0xFF7DB2FF);
 const _blueLight = Color(0xFFE7F0FF);
 const _ink = Color(0xFF0E3E3E);
+const _green = Color(0xFF4CAF50);
 
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
@@ -51,6 +54,25 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  // 샘플 데이터 - 친구별 현재 계획 및 업적
+  static const _samplePlans = [
+    'Python 기초 마스터',
+    'React 웹 개발',
+    'Flutter 앱 개발',
+    'JavaScript 심화',
+    'AI/ML 입문',
+    'Java Spring Boot',
+  ];
+
+  static const _sampleAchievements = [
+    ['첫 걸음', '3일 연속 학습'],
+    ['첫 걸음', '열정적인 학습자', '계획 완수'],
+    ['첫 걸음', '일주일 연속 학습'],
+    ['첫 걸음'],
+    ['첫 걸음', '3일 연속 학습', '첫 친구'],
+    ['첫 걸음', '열정적인 학습자'],
+  ];
+
   Future<void> _loadFriends() async {
     setState(() => _loading = true);
 
@@ -58,12 +80,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
       final data = await FriendsService.getFriends();
       if (mounted) {
         setState(() {
-          _friends = data.map((item) => FriendSummary(
-            id: item['id']?.toString() ?? '',
-            name: item['name']?.toString() ?? '',
-            todayRate: item['todayRate'] ?? 0,
-            avatarUrl: item['avatarUrl']?.toString(),
-          )).toList();
+          _friends = data.asMap().entries.map((entry) {
+            final i = entry.key;
+            final item = entry.value;
+            return FriendSummary(
+              id: item['id']?.toString() ?? '',
+              name: item['name']?.toString() ?? '',
+              todayRate: item['todayRate'] ?? 0,
+              avatarUrl: item['avatarUrl']?.toString(),
+              // 샘플 데이터로 현재 계획과 업적 추가
+              currentPlan: item['currentPlan']?.toString() ?? _samplePlans[i % _samplePlans.length],
+              achievements: (item['achievements'] as List?)?.cast<String>() ?? _sampleAchievements[i % _sampleAchievements.length],
+            );
+          }).toList();
           _loading = false;
         });
       }
@@ -93,6 +122,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
         const SnackBar(content: Text('친구가 추가되었습니다!')),
       );
       await _loadFriends();
+
+      // 친구 추가 업적 체크
+      if (mounted) {
+        final achievement = await AchievementService.onFriendAdded(_friends.length);
+        if (achievement != null && mounted) {
+          showAchievementToast(context, achievement);
+        }
+      }
     } catch (e) {
       debugPrint('Error adding friend: $e');
       if (mounted) {
@@ -313,12 +350,16 @@ class FriendSummary {
   final String name;
   final String? avatarUrl;
   final int todayRate;
+  final String? currentPlan;
+  final List<String> achievements;
 
   FriendSummary({
     required this.id,
     required this.name,
     required this.todayRate,
     this.avatarUrl,
+    this.currentPlan,
+    this.achievements = const [],
   });
 }
 
@@ -329,20 +370,181 @@ class _FriendTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 6),
-      leading: CircleAvatar(
-        radius: 22,
-        backgroundColor: Colors.white,
-        backgroundImage: friend.avatarUrl != null ? NetworkImage(friend.avatarUrl!) : null,
-        child: friend.avatarUrl == null ? const Icon(Icons.person, color: _blue) : null,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(25),
+        borderRadius: BorderRadius.circular(16),
       ),
-      title: Text(friend.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-      subtitle: Text('달성률 ${friend.todayRate}%',
-          style: const TextStyle(color: Colors.white70)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.white),
-      onTap: onTap,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 상단: 아바타 + 이름 + 달성률
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.white,
+                    backgroundImage: friend.avatarUrl != null ? NetworkImage(friend.avatarUrl!) : null,
+                    child: friend.avatarUrl == null ? const Icon(Icons.person, color: _blue) : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          friend.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getProgressColor(friend.todayRate).withAlpha(50),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '오늘 ${friend.todayRate}%',
+                                style: TextStyle(
+                                  color: _getProgressColor(friend.todayRate),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.white70),
+                ],
+              ),
+
+              // 현재 학습 중인 계획 (있는 경우)
+              if (friend.currentPlan != null && friend.currentPlan!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.menu_book, color: Colors.white70, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          friend.currentPlan!,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // 업적 배지 (있는 경우)
+              if (friend.achievements.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: friend.achievements.take(4).map((badge) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getBadgeColor(badge).withAlpha(40),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _getBadgeColor(badge).withAlpha(100)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_getBadgeIcon(badge), size: 12, color: _getBadgeColor(badge)),
+                          const SizedBox(width: 4),
+                          Text(
+                            badge,
+                            style: TextStyle(
+                              color: _getBadgeColor(badge),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  Color _getProgressColor(int rate) {
+    if (rate >= 100) return _green;
+    if (rate >= 50) return Colors.amber;
+    return Colors.white;
+  }
+
+  Color _getBadgeColor(String badge) {
+    switch (badge) {
+      case '첫 걸음':
+        return const Color(0xFFFFD700);
+      case '열정적인 학습자':
+        return const Color(0xFFFF6B35);
+      case '3일 연속 학습':
+        return const Color(0xFFFF5722);
+      case '일주일 연속 학습':
+        return const Color(0xFFFF9800);
+      case '계획 완수':
+        return _green;
+      case '첫 친구':
+        return const Color(0xFF3F51B5);
+      default:
+        return Colors.white;
+    }
+  }
+
+  IconData _getBadgeIcon(String badge) {
+    switch (badge) {
+      case '첫 걸음':
+        return Icons.emoji_events;
+      case '열정적인 학습자':
+        return Icons.local_fire_department;
+      case '3일 연속 학습':
+        return Icons.whatshot;
+      case '일주일 연속 학습':
+        return Icons.local_fire_department;
+      case '계획 완수':
+        return Icons.verified;
+      case '첫 친구':
+        return Icons.people;
+      default:
+        return Icons.star;
+    }
   }
 }
 

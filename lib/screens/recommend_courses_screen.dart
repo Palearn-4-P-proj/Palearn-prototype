@@ -1175,6 +1175,86 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
     );
   }
 
+  // AI Summary 박스 빌더
+  Widget _buildAiSummaryBox() {
+    // 첫 번째 강좌에서 ai_summary 가져오기
+    final aiSummary = courses.isNotEmpty
+        ? (courses[0]['ai_summary']?.toString() ?? '')
+        : '';
+
+    // ai_summary가 없으면 기본 메시지 표시
+    final displayText = aiSummary.isNotEmpty
+        ? aiSummary
+        : '$_level 수준의 $_skill 학습자를 위해 인프런, Udemy, YouTube 등에서 검색한 추천 강좌입니다.';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF7DB2FF).withAlpha(30),
+            const Color(0xFF5A9BF6).withAlpha(20),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _blue.withAlpha(50)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _blue.withAlpha(30),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: _blue,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'AI 추천 요약',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _ink,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            displayText.length > 200
+                ? '${displayText.substring(0, 200)}...'
+                : displayText,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[700],
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '총 ${courses.length}개의 강좌를 찾았습니다',
+            style: TextStyle(
+              fontSize: 12,
+              color: _blue,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _infoCard(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -1273,11 +1353,18 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          itemCount: courses.length,
-                          itemBuilder: (_, i) => _CourseListItem(
-                            data: courses[i],
-                            onTap: () => _showCourseDetail(courses[i]),
-                          ),
+                          itemCount: courses.length + 1, // +1 for AI summary box
+                          itemBuilder: (_, i) {
+                            // 첫 번째 아이템: AI Summary 박스
+                            if (i == 0) {
+                              return _buildAiSummaryBox();
+                            }
+                            // 나머지: 강좌 목록 (index - 1)
+                            return _CourseListItem(
+                              data: courses[i - 1],
+                              onTap: () => _showCourseDetail(courses[i - 1]),
+                            );
+                          },
                         ),
             ),
           ],

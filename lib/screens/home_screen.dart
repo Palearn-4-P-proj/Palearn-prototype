@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/api_service.dart';
 import '../core/widgets.dart';
+import '../services/achievement_service.dart';
+import '../widgets/achievement_toast.dart';
 
 // 색상 상수 (테마에서 직접 참조)
 const Color _ink = Color(0xFF0E3E3E);
@@ -243,6 +245,14 @@ class _HomeScreenState extends State<HomeScreen> {
         // 4. 주간 진행률 재계산
         _recalculateWeeklyProgress();
       });
+
+      // 5. 업적 체크 (완료한 경우에만)
+      if (newCompleted && mounted) {
+        final achievement = await AchievementService.onTaskCompleted();
+        if (achievement != null && mounted) {
+          showAchievementToast(context, achievement);
+        }
+      }
     } catch (e) {
       debugPrint('Error updating task: $e');
     }
@@ -668,6 +678,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final duration = task['duration'] ?? '';
     final completed = task['completed'] ?? false;
 
+    // 다크모드에서 완료된 카드의 색상 조정
+    final completedBgColor = isDark ? const Color(0xFF1B3D2F) : const Color(0xFFE8F5E9);
+    final completedTextColor = isDark ? const Color(0xFFB8E6C9) : const Color(0xFF2E7D32);
+    final taskTextColor = completed ? completedTextColor : textColor;
+
     return GestureDetector(
       onTap: () => _showTaskDetail(task),
       child: Container(
@@ -675,10 +690,10 @@ class _HomeScreenState extends State<HomeScreen> {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: completed ? const Color(0xFFE8F5E9) : cardColor,
+          color: completed ? completedBgColor : cardColor,
           borderRadius: BorderRadius.circular(20),
           border: completed
-              ? Border.all(color: _green.withAlpha(100), width: 2)
+              ? Border.all(color: _green.withAlpha(isDark ? 150 : 100), width: 2)
               : null,
           boxShadow: [
             BoxShadow(
@@ -719,7 +734,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     completed
                         ? Icons.check_circle
                         : Icons.radio_button_unchecked,
-                    color: completed ? _green : Colors.grey,
+                    color: completed ? _green : (isDark ? Colors.grey[400] : Colors.grey),
                     size: 24,
                   ),
                 ),
@@ -732,8 +747,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: textColor,
+                  color: taskTextColor,
                   decoration: completed ? TextDecoration.lineThrough : null,
+                  decorationColor: taskTextColor,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -743,12 +759,15 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: blueLightColor,
+                  color: completed ? (isDark ? const Color(0xFF245038) : const Color(0xFFC8E6C9)) : blueLightColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   duration,
-                  style: const TextStyle(fontSize: 11, color: _blue),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: completed ? (isDark ? const Color(0xFF81C784) : const Color(0xFF388E3C)) : _blue,
+                  ),
                 ),
               ),
           ],
