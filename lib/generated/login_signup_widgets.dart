@@ -7,6 +7,12 @@ const _blue = Color(0xFF7DB2FF);
 const _blueLight = Color(0xFFD4E5FE);
 const _ink = Color(0xFF093030);
 
+// 다크모드 컬러
+const _darkCard = Color(0xFF1E1E1E);
+const _darkFieldBg = Color(0xFF2A3A4A);
+const _darkText = Color(0xFFE5E5E5);
+const _darkHint = Color(0xFF9E9E9E);
+
 /// ==============================
 /// Login
 /// ==============================
@@ -89,6 +95,10 @@ class _LoginWidgetState extends State<LoginWidget> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? _darkCard : Colors.white;
+    final textColor = isDark ? _darkText : _ink;
+    final hintColor = isDark ? _darkHint : _ink.withAlpha(115);
 
     return SizedBox(
       width: double.infinity,
@@ -103,6 +113,23 @@ class _LoginWidgetState extends State<LoginWidget> {
               child: Container(color: _blue),
             ),
           ),
+          // Palearn 로고/텍스트
+          Positioned(
+            left: 0,
+            right: 0,
+            top: size.height * 0.06,
+            child: const Center(
+              child: Text(
+                'Palearn',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          ),
           Positioned(
             left: 0,
             right: 0,
@@ -110,7 +137,7 @@ class _LoginWidgetState extends State<LoginWidget> {
             top: size.height * 0.18,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(40),
                 boxShadow: [
                   BoxShadow(
@@ -125,11 +152,11 @@ class _LoginWidgetState extends State<LoginWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Center(
+                    Center(
                       child: Text(
                         '로그인',
                         style: TextStyle(
-                          color: _ink,
+                          color: textColor,
                           fontSize: 30,
                           fontWeight: FontWeight.w600,
                         ),
@@ -137,13 +164,14 @@ class _LoginWidgetState extends State<LoginWidget> {
                     ),
                     const SizedBox(height: 28),
 
-                    const Text('이메일',
-                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    Text('이메일',
+                        style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: 'example@example.com',
                       controller: _emailController,
                       onChanged: (_) => setState(() => _emailError = null),
+                      isDark: isDark,
                     ),
                     if (_emailError != null) ...[
                       const SizedBox(height: 4),
@@ -151,8 +179,8 @@ class _LoginWidgetState extends State<LoginWidget> {
                     ],
 
                     const SizedBox(height: 20),
-                    const Text('비밀번호',
-                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    Text('비밀번호',
+                        style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: '비밀번호 입력',
@@ -160,12 +188,13 @@ class _LoginWidgetState extends State<LoginWidget> {
                       controller: _passwordController,
                       onChanged: (_) => setState(() => _passwordError = null),
                       onSubmitted: (_) => _handleLogin(),
+                      isDark: isDark,
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                         child: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
                           size: 20,
-                          color: _ink.withValues(alpha: 0.7),
+                          color: hintColor,
                         ),
                       ),
                     ),
@@ -185,12 +214,12 @@ class _LoginWidgetState extends State<LoginWidget> {
 
                     GestureDetector(
                       onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
-                      child: const Center(
+                      child: Center(
                         child: Text.rich(
                           TextSpan(
                             text: "계정이 없으신가요? ",
-                            style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w300),
-                            children: [
+                            style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w300),
+                            children: const [
                               TextSpan(
                                 text: '회원가입',
                                 style: TextStyle(
@@ -366,6 +395,10 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? _darkCard : Colors.white;
+    final textColor = isDark ? _darkText : _ink;
+    final hintColor = isDark ? _darkHint : _ink.withAlpha(115);
 
     return SizedBox(
       width: double.infinity,
@@ -380,6 +413,23 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
               child: Container(color: _blue),
             ),
           ),
+          // Palearn 로고/텍스트
+          Positioned(
+            left: 0,
+            right: 0,
+            top: size.height * 0.06,
+            child: const Center(
+              child: Text(
+                'Palearn',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          ),
           Positioned(
             left: 0,
             right: 0,
@@ -387,7 +437,7 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
             top: size.height * 0.18,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(40),
                 boxShadow: [
                   BoxShadow(
@@ -402,11 +452,11 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Center(
+                    Center(
                       child: Text(
                         '회원가입',
                         style: TextStyle(
-                          color: _ink,
+                          color: textColor,
                           fontSize: 30,
                           fontWeight: FontWeight.w600,
                         ),
@@ -414,13 +464,14 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     ),
                     const SizedBox(height: 28),
 
-                    const Text('이메일',
-                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    Text('이메일',
+                        style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: 'example@example.com',
                       controller: _emailController,
                       onChanged: (_) => setState(() => _emailError = null),
+                      isDark: isDark,
                     ),
                     if (_emailError != null) ...[
                       const SizedBox(height: 4),
@@ -428,13 +479,14 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     ],
 
                     const SizedBox(height: 16),
-                    const Text('이름',
-                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    Text('이름',
+                        style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: '홍길동',
                       controller: _nameController,
                       onChanged: (_) => setState(() => _nameError = null),
+                      isDark: isDark,
                     ),
                     if (_nameError != null) ...[
                       const SizedBox(height: 4),
@@ -442,20 +494,21 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     ],
 
                     const SizedBox(height: 16),
-                    const Text('비밀번호',
-                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    Text('비밀번호',
+                        style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: '비밀번호 입력',
                       obscure: _obscurePassword,
                       controller: _passwordController,
                       onChanged: (_) => setState(() => _passwordError = null),
+                      isDark: isDark,
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                         child: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
                           size: 20,
-                          color: _ink.withAlpha(180),
+                          color: hintColor,
                         ),
                       ),
                     ),
@@ -467,20 +520,21 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     PasswordStrengthIndicator(password: _passwordController.text),
 
                     const SizedBox(height: 16),
-                    const Text('비밀번호 확인',
-                        style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w500)),
+                    Text('비밀번호 확인',
+                        style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     _RoundedField(
                       hint: '비밀번호 확인 입력',
                       obscure: _obscurePassword2,
                       controller: _password2Controller,
                       onChanged: (_) => setState(() => _password2Error = null),
+                      isDark: isDark,
                       trailing: GestureDetector(
                         onTap: () => setState(() => _obscurePassword2 = !_obscurePassword2),
                         child: Icon(
                           _obscurePassword2 ? Icons.visibility : Icons.visibility_off,
                           size: 20,
-                          color: _ink.withAlpha(180),
+                          color: hintColor,
                         ),
                       ),
                     ),
@@ -497,12 +551,12 @@ class _CreateAccountWidgetState extends State<CreateAccountWidget> {
                     const Spacer(),
                     GestureDetector(
                       onTap: widget.onTapBackToLogin ?? () => Navigator.pushReplacementNamed(context, '/login'),
-                      child: const Center(
+                      child: Center(
                         child: Text.rich(
                           TextSpan(
                             text: '이미 계정이 있으신가요? ',
-                            style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w300),
-                            children: [
+                            style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w300),
+                            children: const [
                               TextSpan(
                                 text: '로그인',
                                 style: TextStyle(
@@ -537,6 +591,7 @@ class _RoundedField extends StatelessWidget {
     this.controller,
     this.onChanged,
     this.onSubmitted,
+    this.isDark = false,
   });
   final String? hint;
   final bool obscure;
@@ -544,13 +599,18 @@ class _RoundedField extends StatelessWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = isDark ? _darkFieldBg : _blueLight;
+    final textColor = isDark ? _darkText : _ink;
+    final hintColor = isDark ? _darkHint : _ink.withAlpha(115);
+
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: _blueLight,
+        color: bgColor,
         borderRadius: BorderRadius.circular(22),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -568,13 +628,13 @@ class _RoundedField extends StatelessWidget {
                 border: InputBorder.none,
                 isCollapsed: true,
                 hintStyle: TextStyle(
-                  color: _ink.withAlpha(115),
+                  color: hintColor,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              style: const TextStyle(
-                color: _ink,
+              style: TextStyle(
+                color: textColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),

@@ -29,6 +29,11 @@ async def get_quiz_items(
 당신은 '{skill}' 분야의 개념 이해도를 점검하는 OX 퀴즈 출제기입니다.
 오직 JSON만 출력하세요. (마크다운/코드블록/설명 금지)
 
+🚨🚨🚨 **언어 규칙 - 매우 중요** 🚨🚨🚨
+- question과 explanation은 반드시 **한국어**로만 작성하세요.
+- 영어로 작성하면 안 됩니다. 무조건 한국어입니다.
+- 기술 용어(예: Python, API, React 등)는 그대로 사용 가능하지만, 문장은 한국어로 작성하세요.
+
 [목표]
 - {level} 학습자용 '{skill}' OX 퀴즈 10개 생성
 
@@ -38,7 +43,7 @@ async def get_quiz_items(
 2) 일반상식/컴퓨터기초/역사/시사/언어상식 같은 "도메인 외 상식 문제"는 절대 금지.
    - 금지 예: RAM/HTML/CPU/IP 같은 범용 IT 상식(단, '{skill}'에 직접적으로 필수인 경우만 허용)
 3) OX로 명확히 판별 가능해야 하며, 애매한 표현("대부분", "가끔", "상황에 따라") 금지
-4) explanation은 1~2문장으로 짧고 명확하게(속도 우선)
+4) explanation은 1~2문장으로 짧고 명확하게(속도 우선), 반드시 한국어로 작성
 
 [난이도]
 - {level} 수준에 맞춘 개념으로 구성
@@ -46,14 +51,15 @@ async def get_quiz_items(
 
 [반드시 따를 스키마]
 {{"quizzes":[
-  {{"id":1,"type":"OX","question":"...","options":[],"answerKey":"O","explanation":"..."}},
+  {{"id":1,"type":"OX","question":"한국어 질문...","options":[],"answerKey":"O","explanation":"한국어 설명..."}},
   ...
-  {{"id":10,"type":"OX","question":"...","options":[],"answerKey":"X","explanation":"..."}}
+  {{"id":10,"type":"OX","question":"한국어 질문...","options":[],"answerKey":"X","explanation":"한국어 설명..."}}
 ]}}
 - quizzes 길이 = 10, id=1..10, type="OX", options=[]
 - answerKey는 "O" 또는 "X"만
+- question과 explanation은 반드시 한국어
 
-오직 JSON만 출력하세요."""
+오직 JSON만 출력하세요. question과 explanation은 반드시 한국어로 작성하세요."""
 
     response = call_gpt(prompt, use_search=False)
     data = extract_json(response)

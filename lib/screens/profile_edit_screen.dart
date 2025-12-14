@@ -17,9 +17,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   late TextEditingController photoUrlCtrl;
 
   // ▶ 프로필 정보 — 서버에서 GET으로 받아와서 업데이트해야 할 부분
-  String photoUrl =
-      'https://images.unsplash.com/photo-1603415526960-f7e0328d13a2?w=256&h=256&fit=crop';
-  String userId = '25030024';
+  String photoUrl = '';
+  String userId = '';
 
   bool hidePw = true;
   bool hidePw2 = true;

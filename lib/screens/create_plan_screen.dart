@@ -30,9 +30,20 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   final weekDays = const ['월', '화', '수', '목', '금', '토', '일'];
   final Set<String> restDays = {};
 
-  // 5) 현재 수준
-  final levels = const ['초급(처음 배워요)', '중급(기초는 알아요)', '고급(꽤 할 줄 알아요)'];
-  String? selectedLevel;
+  // 5) 현재 수준 (1~10 슬라이더)
+  double _levelValue = 5.0;
+
+  String get _levelText {
+    if (_levelValue <= 3) return '초급';
+    if (_levelValue <= 6) return '중급';
+    return '고급';
+  }
+
+  String get _levelDescription {
+    if (_levelValue <= 3) return '기초부터 차근차근 시작해요';
+    if (_levelValue <= 6) return '기본 개념은 알고 있어요';
+    return '실무 수준으로 심화 학습해요';
+  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -67,8 +78,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   void _goNext() {
     if (selectedSkill == null ||
         selectedHour == null ||
-        startDate == null ||
-        selectedLevel == null) {
+        startDate == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('모든 항목을 입력해 주세요.')));
       return;
@@ -88,7 +98,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
         hour: selectedHour!,
         start: startDate!,
         restDays: restDays.toList(),
-        level: selectedLevel!,
+        level: _levelText,
       ),
     ));
   }
@@ -219,18 +229,75 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                   const SizedBox(height: 18),
 
                   _Labeled('현재 수준 (자가 진단)'),
-                  _Rounded(
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        hint: const Text('현재 수준을 선택하세요'),
-                        value: selectedLevel,
-                        items: [
-                          for (final lv in levels)
-                            DropdownMenuItem(value: lv, child: Text(lv)),
-                        ],
-                        onChanged: (v) => setState(() => selectedLevel = v),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _blueLight,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _levelText,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: _ink,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _blue,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${_levelValue.round()}/10',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _levelDescription,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: _blue,
+                            inactiveTrackColor: Colors.grey[300],
+                            thumbColor: _blue,
+                            overlayColor: _blue.withValues(alpha: 0.2),
+                            trackHeight: 6,
+                          ),
+                          child: Slider(
+                            value: _levelValue,
+                            min: 1,
+                            max: 10,
+                            divisions: 9,
+                            onChanged: (value) => setState(() => _levelValue = value),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('초급', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                            Text('중급', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                            Text('고급', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -15,10 +15,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool loading = true;
 
   // ▶ 서버에서 불러와야 할 실제 내 프로필 정보
-  String name = 'John Smith';
-  String userId = '25030024';
-  String photoUrl =
-      'https://images.unsplash.com/photo-1603415526960-f7e0328d13a2?w=256&h=256&fit=crop';
+  String name = '';
+  String userId = '';
+  String photoUrl = '';
 
   @override
   void initState() {
@@ -31,17 +30,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final data = await ProfileService.getProfile();
       if (mounted) {
         setState(() {
-          name = data['name']?.toString() ?? 'User';
-          userId = data['user_id']?.toString() ?? '';
-          photoUrl = data['photo_url']?.toString() ??
-              'https://images.unsplash.com/photo-1603415526960-f7e0328d13a2?w=256&h=256&fit=crop';
+          name = data['name']?.toString() ?? '사용자';
+          userId = data['user_id']?.toString() ?? data['friend_code']?.toString() ?? '';
+          photoUrl = data['photo_url']?.toString() ?? '';
           loading = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading profile: $e');
+      // API 실패 시 저장된 사용자 이름 사용
       if (mounted) {
-        setState(() => loading = false);
+        final savedName = await SecureTokenStorage.getUserName();
+        setState(() {
+          name = savedName ?? '사용자';
+          loading = false;
+        });
       }
     }
   }
@@ -155,7 +158,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                   child: Column(
                     children: [
-                      CircleAvatar(radius: 48, backgroundImage: NetworkImage(photoUrl)),
+                      CircleAvatar(
+                        radius: 48,
+                        backgroundColor: const Color(0xFF7DB2FF),
+                        backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                        child: photoUrl.isEmpty
+                            ? Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
+                              )
+                            : null,
+                      ),
                       const SizedBox(height: 12),
                       Text(name,
                           style: TextStyle(

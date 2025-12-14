@@ -30,8 +30,14 @@ class QuizResultScreen extends StatelessWidget {
     final _startDate = args?['startDate']?.toString() ?? DateTime.now().toIso8601String();
     final _restDays = (args?['restDays'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? <String>[];
 
+    // 다크모드 지원
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? const Color(0xFFE5E5E5) : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -100,22 +106,22 @@ class QuizResultScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 0),
                 padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(28),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const Text('상세 결과',
-                            style: TextStyle(fontSize: 16, color: Colors.black54)),
+                        Text('상세 결과',
+                            style: TextStyle(fontSize: 16, color: textColor)),
                         const Spacer(),
                         Text(
                           '$percent%',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black54),
+                              color: textColor),
                         ),
                       ],
                     ),
@@ -123,11 +129,11 @@ class QuizResultScreen extends StatelessWidget {
                     Expanded(
                       child: ListView.separated(
                         itemCount: _details.length,
-                        separatorBuilder: (_, __) => const Divider(height: 12),
+                        separatorBuilder: (_, __) => Divider(height: 12, color: isDark ? Colors.white24 : Colors.black12),
                         itemBuilder: (ctx, i) => Row(
                           children: [
                             Text('문제 ${i + 1}',
-                                style: const TextStyle(color: Colors.black54)),
+                                style: TextStyle(color: textColor)),
                             const Spacer(),
                             Text(
                               _details[i] ? '정답' : '오답',

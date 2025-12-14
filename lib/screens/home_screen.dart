@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String displayName = 'User';
+  String displayName = '사용자';
   double todayProgress = 0.0;
 
   // 오늘의 할 일 (상세 정보 포함)
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // API 응답의 이름이 비어있으면 로컬 저장된 이름 사용
         final apiName = data['name']?.toString() ?? '';
         setState(() {
-          displayName = apiName.isNotEmpty ? apiName : (savedName ?? 'User');
+          displayName = apiName.isNotEmpty ? apiName : (savedName ?? '사용자');
           todayProgress = (data['todayProgress'] ?? 0) / 100.0;
           loadingHeader = false;
         });
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final savedName = await SecureTokenStorage.getUserName();
       if (mounted) {
         setState(() {
-          displayName = savedName ?? 'User';
+          displayName = savedName ?? '사용자';
           todayProgress = 0.0;
           loadingHeader = false;
         });

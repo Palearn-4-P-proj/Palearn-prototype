@@ -113,21 +113,28 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FD);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? const Color(0xFFE5E5E5) : _ink;
+    final subTextColor = isDark ? const Color(0xFFB0B0B0) : Colors.grey[600];
+    final fieldBgColor = isDark ? const Color(0xFF2A3A4A) : _blueLight;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FD),
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           children: [
             // 검색 헤더
             Container(
               padding: const EdgeInsets.fromLTRB(8, 12, 16, 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: isDark ? Colors.black26 : Colors.black12,
                     blurRadius: 4,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -135,22 +142,23 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
                   ),
                   Expanded(
                     child: Container(
                       height: 44,
                       decoration: BoxDecoration(
-                        color: _blueLight,
+                        color: fieldBgColor,
                         borderRadius: BorderRadius.circular(22),
                       ),
                       child: TextField(
                         controller: _searchController,
                         focusNode: _focusNode,
                         onChanged: _search,
+                        style: TextStyle(color: textColor),
                         decoration: InputDecoration(
                           hintText: '학습 계획, 과제 검색...',
-                          hintStyle: TextStyle(color: Colors.grey[500]),
+                          hintStyle: TextStyle(color: subTextColor),
                           prefixIcon: const Icon(Icons.search, color: _blue),
                           suffixIcon: _query.isNotEmpty
                               ? IconButton(
@@ -158,7 +166,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     _searchController.clear();
                                     _search('');
                                   },
-                                  icon: const Icon(Icons.clear, color: Colors.grey),
+                                  icon: Icon(Icons.clear, color: subTextColor),
                                 )
                               : null,
                           border: InputBorder.none,
