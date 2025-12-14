@@ -30,17 +30,17 @@ async def get_recommended_courses(
     log_stage(6, "강좌 추천", current_user['name'])
     log_navigation(current_user['name'], "강좌 추천 화면")
 
-    # 강화된 프롬프트 - 실제 존재하는 강좌를 웹 검색으로 찾기
+    # 강화된 프롬프트 - 실제 존재하는 강좌를 웹 검색으로 찾기 + 상세 커리큘럼
     prompt = f"""[CRITICAL INSTRUCTION]
 You MUST use web search to find REAL, CURRENTLY AVAILABLE courses for "{skill}".
 Do NOT generate fictional courses. Every course must exist and be accessible.
 
 [MANDATORY SEARCH QUERIES - Execute these searches NOW]
-1. Search: "인프런 {skill} 강좌 추천"
-2. Search: "{skill} udemy 강의 한글"
-3. Search: "{skill} 유튜브 강좌 재생목록"
-4. Search: "{skill} 입문 책 추천 교보문고"
-5. Search: "부스트코스 {skill}"
+1. Search: "인프런 {skill} 강좌 추천 커리큘럼"
+2. Search: "{skill} udemy 강의 한글 목차"
+3. Search: "{skill} 유튜브 강좌 재생목록 전체영상"
+4. Search: "{skill} 입문 책 추천 교보문고 목차"
+5. Search: "부스트코스 {skill} 커리큘럼"
 
 [STRICT REQUIREMENTS]
 - Use ONLY URLs you found in search results
@@ -61,6 +61,15 @@ FORBIDDEN patterns:
 - Any URL with /search, ?q=, ?s=, /courses?
 - Generic homepages
 - Made-up URLs
+
+[CURRICULUM REQUIREMENTS - CRITICAL]
+You MUST include COMPLETE curriculum with ALL lectures.
+- If a course has 50 lectures, list ALL 50 lectures
+- If a YouTube playlist has 30 videos, list ALL 30 videos
+- Each lecture MUST have: title, duration, and description
+- Do NOT abbreviate or summarize the curriculum
+- Do NOT write "...외 10개" or similar
+- Include EVERY single lecture from the actual course
 
 [OUTPUT FORMAT]
 Return 4-6 courses in this exact JSON structure:
@@ -85,9 +94,18 @@ Return 4-6 courses in this exact JSON structure:
       "link": "검색에서 찾은 실제 URL",
       "curriculum": [
         {{
-          "section": "섹션명",
+          "section": "섹션 1: 섹션명",
           "lectures": [
-            {{"title": "강의 제목", "duration": "15분"}}
+            {{"title": "1-1. 실제 강의 제목", "duration": "15분", "description": "강의 간단 설명"}},
+            {{"title": "1-2. 실제 강의 제목", "duration": "20분", "description": "강의 간단 설명"}},
+            {{"title": "1-3. 실제 강의 제목", "duration": "18분", "description": "강의 간단 설명"}}
+          ]
+        }},
+        {{
+          "section": "섹션 2: 섹션명",
+          "lectures": [
+            {{"title": "2-1. 실제 강의 제목", "duration": "22분", "description": "강의 간단 설명"}},
+            {{"title": "2-2. 실제 강의 제목", "duration": "25분", "description": "강의 간단 설명"}}
           ]
         }}
       ]
@@ -101,6 +119,7 @@ Return 4-6 courses in this exact JSON structure:
 - 1-2 books if available
 
 Search for "{skill}" courses for {level} level learners.
+Include COMPLETE curriculum with ALL lectures for each course.
 Output ONLY valid JSON. No explanations."""
 
     response = call_gpt(prompt, use_search=True)

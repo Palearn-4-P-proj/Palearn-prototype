@@ -544,7 +544,11 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
     final duration = course['total_duration']?.toString() ?? course['duration']?.toString() ?? '';
     final levelDetail = course['level_detail']?.toString() ?? '';
     final reason = course['reason']?.toString() ?? '';
-    final totalLectures = course['total_lectures']?.toString() ?? '';
+
+    // total_lectures 처리 - 숫자만 추출
+    String rawTotalLectures = course['total_lectures']?.toString() ?? '';
+    // "54개" 같은 문자열에서 숫자만 추출
+    final totalLecturesNum = RegExp(r'\d+').firstMatch(rawTotalLectures)?.group(0) ?? '';
 
     // 새로운 커리큘럼 형식 지원 (섹션별 강의 목록)
     final rawCurriculum = course['curriculum'] ?? course['syllabus'] ?? [];
@@ -561,6 +565,11 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
     } else if (rawCurriculum is List) {
       lectureCount = rawCurriculum.length;
     }
+
+    // 표시할 강의 수 결정 (total_lectures 숫자 > 계산된 값 > 0)
+    final displayLectureCount = totalLecturesNum.isNotEmpty
+        ? int.tryParse(totalLecturesNum) ?? lectureCount
+        : lectureCount;
 
     showModalBottomSheet(
       context: context,
@@ -805,7 +814,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _infoCard('강의 수', totalLectures.isNotEmpty ? '${totalLectures}개' : '${lectureCount}개'),
+                          child: _infoCard('강의 수', '${displayLectureCount}개'),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -867,7 +876,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              totalLectures.isNotEmpty ? '총 ${totalLectures}강' : '총 ${lectureCount}강',
+                              '총 $displayLectureCount강',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: _blue,
@@ -1288,9 +1297,15 @@ class _CourseListItem extends StatelessWidget {
     final type = data['type'] ?? 'course';
     final free = (data['free'] ?? false);
     final summary = data['summary'] ?? '';
-    final totalLectures = data['total_lectures'];
+
+    // total_lectures에서 숫자만 추출 (54개 -> 54)
+    final rawTotalLectures = data['total_lectures']?.toString() ?? '';
+    final totalLecturesNum = RegExp(r'\d+').firstMatch(rawTotalLectures)?.group(0);
     final rawCurriculum = data['curriculum'] ?? data['syllabus'];
-    final lectureCount = totalLectures ?? _countLectures(rawCurriculum);
+    final calculatedCount = _countLectures(rawCurriculum);
+    final lectureCount = totalLecturesNum != null
+        ? int.tryParse(totalLecturesNum) ?? calculatedCount
+        : calculatedCount;
 
     return GestureDetector(
       onTap: onTap,

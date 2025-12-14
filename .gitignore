@@ -20,3 +20,4 @@ macos/Runner.xcworkspace/
 .vscode/
 .vscode/
 *.log
+.vercel
