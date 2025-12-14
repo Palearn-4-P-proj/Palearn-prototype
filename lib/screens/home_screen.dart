@@ -415,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeader(String percentLabel, int completedCount) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -915,7 +915,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: () =>
                                   Navigator.pushNamed(context, '/create_plan'),
                               style: TextButton.styleFrom(
-                                foregroundColor: subTextColor,
+                                foregroundColor: _blue,
                               ),
                               child: const Text('새 계획 만들기'),
                             ),
