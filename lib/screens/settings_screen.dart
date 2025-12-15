@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/api_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -10,6 +11,27 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    });
+  }
+
+  Future<void> _saveNotificationSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+    setState(() {
+      _notificationsEnabled = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: '알림',
                     trailing: Switch(
                       value: _notificationsEnabled,
-                      onChanged: (val) => setState(() => _notificationsEnabled = val),
+                      onChanged: (val) => _saveNotificationSetting(val),
                       activeTrackColor: const Color(0xFF7DB2FF),
                       activeThumbColor: Colors.white,
                     ),
@@ -218,11 +240,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _clearCache() async {
-    await CacheManager.clearAllCache();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('캐시가 삭제되었습니다.')),
+  void _clearCache() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.cleaning_services, color: Color(0xFF7DB2FF)),
+            SizedBox(width: 8),
+            Text('캐시 삭제'),
+          ],
+        ),
+        content: const Text(
+          '캐시된 데이터를 삭제하시겠습니까?\n\n로컬에 저장된 임시 데이터가 삭제됩니다.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await CacheManager.clearAllCache();
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('캐시가 삭제되었습니다.')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7DB2FF),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
     );
   }
 

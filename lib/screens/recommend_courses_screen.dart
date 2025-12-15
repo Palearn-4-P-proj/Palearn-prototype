@@ -7,6 +7,26 @@ const Color _ink = Color(0xFF0E3E3E);
 const Color _blue = Color(0xFF7DB2FF);
 const Color _blueLight = Color(0xFFE7F0FF);
 
+// 숫자에 콤마 추가하는 헬퍼 함수
+String _formatNumber(String numStr) {
+  // 숫자만 추출
+  final digits = numStr.replaceAll(RegExp(r'[^\d]'), '');
+  if (digits.isEmpty) return numStr;
+
+  final number = int.tryParse(digits);
+  if (number == null) return numStr;
+
+  // 콤마 추가
+  final formatted = number.toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (Match m) => '${m[1]},',
+  );
+
+  // 원래 문자열에 단위가 있으면 붙여서 반환 (예: "명", "개" 등)
+  final suffix = numStr.replaceAll(RegExp(r'[\d,\s]'), '');
+  return suffix.isNotEmpty ? '$formatted$suffix' : formatted;
+}
+
 class RecommendCoursesScreen extends StatefulWidget {
   const RecommendCoursesScreen({super.key});
 
@@ -732,7 +752,7 @@ class _RecommendCoursesScreenState extends State<RecommendCoursesScreen>
                             const Icon(Icons.people, size: 18, color: Colors.grey),
                             const SizedBox(width: 4),
                             Text(
-                              students,
+                              _formatNumber(students),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,

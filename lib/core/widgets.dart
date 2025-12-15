@@ -501,18 +501,18 @@ class CommonBottomNav extends StatelessWidget {
       return;
     }
 
-    // 기본 네비게이션 동작
+    // 기본 네비게이션 동작 - pushReplacementNamed로 스택 쌓임 방지
     if (item == currentItem) return;
 
     switch (item) {
       case NavItem.home:
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+        Navigator.pushReplacementNamed(context, '/home');
         break;
       case NavItem.friends:
-        Navigator.pushNamed(context, '/friends');
+        Navigator.pushReplacementNamed(context, '/friends');
         break;
       case NavItem.profile:
-        Navigator.pushNamed(context, '/profile');
+        Navigator.pushReplacementNamed(context, '/profile');
         break;
     }
   }

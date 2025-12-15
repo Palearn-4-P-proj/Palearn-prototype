@@ -29,6 +29,11 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -449,32 +454,46 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   }
 
   Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: _blue,
-          borderRadius: BorderRadius.circular(22),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tabs = ['DAILY', 'WEEKLY', 'MONTHLY'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
         ),
-        indicatorPadding:
-            const EdgeInsets.symmetric(horizontal: -8, vertical: 4),
-        labelPadding: const EdgeInsets.symmetric(vertical: 10),
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.black54,
-        labelStyle: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final selected = _tabController.index == index;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _tabController.animateTo(index);
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected ? _blue : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    tabs[index],
+                    style: TextStyle(
+                      color: selected ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
-        tabs: const [
-          Tab(text: 'Daily'),
-          Tab(text: 'Weekly'),
-          Tab(text: 'Monthly'),
-        ],
       ),
     );
   }

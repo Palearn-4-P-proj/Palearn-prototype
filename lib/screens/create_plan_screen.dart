@@ -106,34 +106,26 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ 뒤로가기 AppBar 추가 ————
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      // ————————————————
-
       backgroundColor: const Color(0xFFF7F8FD),
       body: SafeArea(
         child: Column(
           children: [
-            // 헤더
+            // 헤더 (친구 화면과 동일한 스타일 - 화살표 포함)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
               decoration: const BoxDecoration(
                 color: _blue,
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.menu_book_rounded, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('새로운 학습 계획 만들기',
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('새로운 학습 계획 만들기',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,

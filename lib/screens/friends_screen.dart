@@ -171,11 +171,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
         child: RefreshIndicator(
           onRefresh: _loadFriends, // ← 새로고침 시 GET 호출
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
             children: [
-              const SizedBox(height: 8),
-
-              // 파란색 헤더
+              // 파란색 헤더 (여백 없이 상단에 붙음)
               Container(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                 decoration: const BoxDecoration(
@@ -210,9 +208,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
               // 내 친구 코드 박스
               if (_myFriendCode != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(bottom: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: cardColor,
                     borderRadius: BorderRadius.circular(20),
@@ -241,98 +241,105 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       ),
                     ],
                   ),
+                  ),
                 ),
 
               // 친구 추가 박스
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: blueLightColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('친구 추가', style: TextStyle(color: textColor, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _codeCtrl,
-                            decoration: InputDecoration(
-                              hintText: '친구 코드 입력',
-                              filled: true,
-                              fillColor: cardColor,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: blueLightColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('친구 추가', style: TextStyle(color: textColor, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _codeCtrl,
+                              decoration: InputDecoration(
+                                hintText: '친구 코드 입력',
+                                filled: true,
+                                fillColor: cardColor,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed: _adding ? null : _addByCode,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _blue,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: _adding ? null : _addByCode,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _blue,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: _adding
+                                  ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                                  : const Text('추가', style: TextStyle(color: Colors.white)),
                             ),
-                            child: _adding
-                                ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                                : const Text('추가', style: TextStyle(color: Colors.white)),
-                          ),
-                        )
-                      ],
-                    )
-                  ],
+                          )
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
               // 친구 목록 박스
-              Container(
-                padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
-                decoration: BoxDecoration(
-                  color: _blue,
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('친구 목록',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                    const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
+                  decoration: BoxDecoration(
+                    color: _blue,
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('친구 목록',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                      const SizedBox(height: 8),
 
-                    // 로딩 상태
-                    if (_loading)
-                      const Padding(
-                        padding: EdgeInsets.all(28.0),
-                        child: Center(child: CircularProgressIndicator(color: Colors.white)),
-                      )
+                      // 로딩 상태
+                      if (_loading)
+                        const Padding(
+                          padding: EdgeInsets.all(28.0),
+                          child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                        )
 
-                    // 친구 없음
-                    else if (_friends.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(28.0),
-                        child: Text('등록된 친구가 없습니다.',
-                            style: TextStyle(color: Colors.white70)),
-                      )
+                      // 친구 없음
+                      else if (_friends.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(28.0),
+                          child: Text('등록된 친구가 없습니다.',
+                              style: TextStyle(color: Colors.white70)),
+                        )
 
-                    // 친구 목록
-                    else
-                      ..._friends.map((f) => _FriendTile(friend: f, onTap: () => _openDetail(f))),
+                      // 친구 목록
+                      else
+                        ..._friends.map((f) => _FriendTile(friend: f, onTap: () => _openDetail(f))),
 
-                    const SizedBox(height: 8),
-                  ],
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
               ),
             ],

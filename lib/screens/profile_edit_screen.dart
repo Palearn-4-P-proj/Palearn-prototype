@@ -342,9 +342,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                             margin:
                             const EdgeInsets.only(right: 4, bottom: 4),
                             padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF7DB2FF),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7DB2FF),
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
                             ),
                             child: const Icon(Icons.edit,
                                 size: 18, color: Colors.white),
@@ -379,17 +383,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     ),
                     _field(
                       label: '생일',
-                      child: GestureDetector(
-                        onTap: () => _selectBirthDate(),
-                        child: AbsorbPointer(
-                          child: TextField(
-                            controller: birthCtrl,
-                            decoration: _decoration('생일을 선택하세요').copyWith(
-                              suffixIcon: const Icon(
-                                Icons.calendar_today,
-                                color: Color(0xFF7DB2FF),
-                              ),
-                            ),
+                      child: TextField(
+                        controller: birthCtrl,
+                        readOnly: true,
+                        onTap: _selectBirthDate,
+                        decoration: _decoration('생일을 선택하세요').copyWith(
+                          suffixIcon: const Icon(
+                            Icons.calendar_today,
+                            color: Color(0xFF7DB2FF),
                           ),
                         ),
                       ),

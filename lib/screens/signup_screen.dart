@@ -13,8 +13,8 @@ class SignUpScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 430),
             child: SingleChildScrollView(
               child: CreateAccountWidget(
-                // 🔵 로그인 화면으로 이동
-                onTapBackToLogin: () => Navigator.pushReplacementNamed(context, '/login'),
+                // 🔵 로그인 화면으로 이동 (push가 아닌 pop으로 뒤로가기)
+                onTapBackToLogin: () => Navigator.pop(context),
 
                 // ==================================================================
                 // 🔵 [FastAPI POST 필요]

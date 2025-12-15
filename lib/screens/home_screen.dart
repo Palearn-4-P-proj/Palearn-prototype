@@ -655,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Map<String, dynamic>> nextWeekTasks = [];
 
     for (final plan in myPlans) {
-      final schedule = plan['schedule'] as List? ?? [];
+      final schedule = plan['daily_schedule'] as List? ?? [];
       for (final day in schedule) {
         final dateStr = day['date'] as String? ?? '';
         if (dateStr.isEmpty) continue;
