@@ -45,39 +45,38 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  // 헤더 (여백 없이 상단에 붙음)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF7DB2FF),
-                      borderRadius:
-                          BorderRadius.vertical(bottom: Radius.circular(30)),
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                              color: Colors.white),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          '어제 했던 것 복습',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                // 헤더 (SafeArea 밖, 상단에 완전히 붙음)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 18, 20, 24),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF7DB2FF),
+                    borderRadius:
+                        BorderRadius.vertical(bottom: Radius.circular(30)),
                   ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        '어제 했던 것 복습',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                   // 콘텐츠 리스트
                   Expanded(
                     child: ListView(
@@ -99,9 +98,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       ],
                     ),
                   ),
-                ],
-              ),
-      ),
+              ],
+            ),
       bottomNavigationBar: const CommonBottomNav(currentItem: NavItem.home),
     );
   }
